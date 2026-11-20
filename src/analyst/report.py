@@ -200,7 +200,7 @@ def bewertung_zeilen(z: dict) -> list[str]:
         f"- Branche ({z.get('branche_basis', 'nicht gefunden')}): KGV-Median "
         f"{_fmt(z['kgv_branche']) if _hat(z, 'kgv_branche') else 'nicht gefunden'}, EV/EBITDA-Median "
         f"{_fmt(z['ev_ebitda_branche']) if _hat(z, 'ev_ebitda_branche') else 'nicht gefunden'}",
-        f"- eigener KGV-Schnitt: "
+        f"- eigener KGV-Median: "
         + (f"{_fmt(z['kgv_hist'])} ({z['kgv_hist_jahre']} Geschäftsjahre)" if _hat(z, "kgv_hist")
            else "nicht gefunden"),
         f"- EV/EBITDA {_fmt(z['ev_ebitda']) if _hat(z, 'ev_ebitda') else 'nicht gefunden'}",
@@ -696,7 +696,7 @@ def main(argv: list[str] | None = None) -> None:
     if not args.ohne_fundamentals and len(vorauswahl):
         fund = lade_fundamentals(list(vorauswahl["ticker"]), details=True, nur_cache=args.nur_cache)
         basis = lade_fundamentals(list(behalten["ticker"]), details=False, nur_cache=True)
-        # Jahresendkurse für den eigenen KGV-Schnitt: 10-Jahres-Cache des Backtests, falls vorhanden
+        # Jahresendkurse für den eigenen KGV-Median: 10-Jahres-Cache des Backtests, falls vorhanden
         from analyst.data import DATENORDNER, KursCache, lade_kurse
 
         lang = lade_kurse(list(vorauswahl["ticker"]), None, cache=KursCache(DATENORDNER / "prices_10y"),

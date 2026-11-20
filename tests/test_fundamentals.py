@@ -214,3 +214,9 @@ def test_historie_aus_langem_cache(cfg):
 def test_markt_aus_ticker():
     from analyst.fundamentals import markt_aus_ticker
     assert [markt_aus_ticker(t) for t in ("8306.T", "SAP.DE", "AIR.PA", "INTC")] == ["jp", "de", "de", "us"]
+
+
+def test_kgv_historie_median_gegen_ausreisser():
+    close = pd.Series([100.0] * 4, index=pd.to_datetime([f"{j}-12-31" for j in (2022, 2023, 2024, 2025)]))
+    eps = {"2022-12-31": 5.0, "2023-12-31": 5.0, "2024-12-31": 0.5, "2025-12-31": 5.0}  # Ausreißerjahr KGV 200
+    assert kgv_historie(eps, close) == (pytest.approx(20.0), 4)

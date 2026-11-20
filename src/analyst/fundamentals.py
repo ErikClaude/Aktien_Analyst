@@ -7,7 +7,7 @@ Quelle: Yahoo Finance über yfinance. Yahoo begrenzt diese Abfragen streng
   - nie werden Werte geschätzt oder aufgefüllt
 
 Punkte (je 0–10, Regeln in config/scoring.yaml):
-  B (Bewertung):   KGV vs. Branchenmedian, KGV vs. eigener Schnitt der letzten
+  B (Bewertung):   KGV vs. Branchenmedian, KGV vs. eigener Median der letzten
                    Jahre, EV/EBITDA vs. Branchenmedian
   E (Erwartungen): Abstand zum Ø-Kursziel, Analystenempfehlung,
                    Trend der Gewinnschätzung (nächstes Jahr), Revisionen 30 Tage
@@ -185,7 +185,10 @@ def kgv_erwartet(z: dict, kurs: float) -> float:
 
 def kgv_historie(eps_historie: dict | None, close: pd.Series | None,
                  waehrung_ok: bool = True) -> tuple[float, int]:
-    """Ø-KGV der letzten Geschäftsjahre: Schlusskurs am Jahresende / Gewinn je Aktie.
+    """KGV-Median der letzten Geschäftsjahre: Schlusskurs am Jahresende / Gewinn je Aktie.
+
+    Median statt Mittelwert: Ein Jahr mit sehr kleinem Gewinn (z. B. Sonder-
+    abschreibung) würde den Mittelwert stark nach oben ziehen.
 
     Nur Jahre mit positivem Gewinn und vorhandenem Kurs. Bei abweichender
     Berichtswährung (z. B. ADRs) nicht berechenbar. Rückgabe (Schnitt, Anzahl Jahre).
@@ -200,7 +203,7 @@ def kgv_historie(eps_historie: dict | None, close: pd.Series | None,
         kurs = close.asof(d)
         if not pd.isna(kurs):
             werte.append(kurs / eps)
-    return (float(pd.Series(werte).mean()), len(werte)) if werte else (math.nan, 0)
+    return (float(pd.Series(werte).median()), len(werte)) if werte else (math.nan, 0)
 
 
 def markt_aus_ticker(ticker: str) -> str:
@@ -291,7 +294,7 @@ def punkte_bewertung(z: dict, cfg: dict, trend: str = "") -> dict:
         (_stufe_kleiner(r_branche, c["kgv_vs_branche"]),
          f"KGV {k_art} {_f(k)} vs. Branche {_f(z.get('kgv_branche', math.nan))}"),
         (_stufe_kleiner(r_hist, c["kgv_vs_historie"]),
-         f"KGV vs. eigener Schnitt {_f(z.get('kgv_hist', math.nan))} "
+         f"KGV vs. eigener Median {_f(z.get('kgv_hist', math.nan))} "
          f"({z.get('kgv_hist_jahre', 0)} Jahre"
          + ("" if genug_jahre else f", zu kurz – zählt erst ab {c.get('min_jahre_historie', 3)}") + ")"),
         (_stufe_kleiner(r_ev, c["ev_ebitda_vs_branche"]),
@@ -378,7 +381,7 @@ def ergaenze_fundamentals(
     ``fund``  = Details der Kandidaten, ``basis`` = Basisdaten möglichst vieler
     Aktien (für die Branchenmediane). Aktien ohne Fundamentaldaten bekommen
     B = E = 0 und den Hinweis "nicht gefunden". ``kurse_historie`` (z. B. der
-    10-Jahres-Cache) liefert die Jahresendkurse für den eigenen KGV-Schnitt.
+    10-Jahres-Cache) liefert die Jahresendkurse für den eigenen KGV-Median.
     ``maerkte`` (ticker -> markt aus dem Universum) ordnet die Basisdaten zu;
     fehlt ein Ticker, wird der Markt aus dem Suffix abgeleitet.
     """
