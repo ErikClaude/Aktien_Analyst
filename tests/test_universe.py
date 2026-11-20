@@ -43,19 +43,29 @@ def test_universum_unbekannter_markt(config):
 
 def test_filter(config):
     tabelle = pd.DataFrame({
-        "ticker":       ["OK", "TEUER", "GRENZE", "PENNY", "KLEIN", "OHNEKAP", "OHNEKURS"],
-        "kurs_eur":     [50.0, 300.0,   150.0,    0.5,     20.0,    20.0,      float("nan")],
-        "marktkap_eur": [5e9,  5e9,     5e9,      5e9,     5e8,     float("nan"), 5e9],
+        "ticker":       ["OK", "TEUER", "GRENZE", "GROSS_UNTER_1", "KLEIN", "OHNEKAP", "OHNEKURS"],
+        "kurs_eur":     [50.0, 300.0,   150.0,    0.5,             20.0,    20.0,      float("nan")],
+        "marktkap_eur": [5e9,  5e9,     5e9,      5e9,             5e8,     float("nan"), 5e9],
     })
     behalten, raus = wende_filter_an(tabelle, config["filter"])
-    assert list(behalten["ticker"]) == ["OK"]
+    # Kurs unter 1 €, aber groß (>= 1 Mrd. €): nur die Marktkap. zählt -> bleibt drin
+    assert list(behalten["ticker"]) == ["OK", "GROSS_UNTER_1"]
     gruende = dict(zip(raus["ticker"], raus["grund"]))
     assert gruende["TEUER"].startswith("Kurs ab 150")
     assert gruende["GRENZE"].startswith("Kurs ab 150")  # Regel: unter 150 €
-    assert "Penny" in gruende["PENNY"]
     assert "unter 1 Mrd" in gruende["KLEIN"]
     assert "nicht gefunden" in gruende["OHNEKAP"]
     assert "nicht gefunden" in gruende["OHNEKURS"]
+
+
+def test_filter_penny_mit_hoeherer_ausnahmeschwelle(config):
+    """Schwelle 10 Mrd. €: unter 1 € mit 5 Mrd. € fliegt raus, mit 50 Mrd. € bleibt drin."""
+    cfg = {**config["filter"], "penny_ausnahme_ab_marktkap_eur": 1e10}
+    tabelle = pd.DataFrame({"ticker": ["MITTEL", "RIESE"], "kurs_eur": [0.5, 0.5],
+                            "marktkap_eur": [5e9, 5e10]})
+    behalten, raus = wende_filter_an(tabelle, cfg)
+    assert list(behalten["ticker"]) == ["RIESE"]
+    assert "Penny" in raus.at[0, "grund"]
 
 
 def test_filter_preisgrenze_ueberschreiben(config):

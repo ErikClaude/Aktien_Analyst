@@ -35,7 +35,8 @@ wechselkurse:
 
 filter:
   max_kurs_eur: 150        # nur ganze Aktien per Einzelorder
-  min_kurs_eur: 1          # keine Penny Stocks
+  min_kurs_eur: 1          # keine Penny Stocks ...
+  penny_ausnahme_ab_marktkap_eur: 1.0e+9  # ... außer bei großen Firmen: dann zählt nur die Marktkap.
   min_marktkap_eur: 1.0e+9  # mind. 1 Mrd. € Marktkapitalisierung
 
 # Daten

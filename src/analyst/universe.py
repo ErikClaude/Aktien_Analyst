@@ -100,18 +100,20 @@ def wende_filter_an(
     grenze = float(max_kurs_eur if max_kurs_eur is not None else filter_cfg["max_kurs_eur"])
     min_kurs = float(filter_cfg["min_kurs_eur"])
     min_kap = float(filter_cfg["min_marktkap_eur"])
+    # Große Firmen (z. B. NTT nach Aktiensplit) dürfen unter 1 € notieren
+    ausnahme_ab = float(filter_cfg.get("penny_ausnahme_ab_marktkap_eur", min_kap))
 
     def grund(z) -> str:
         if pd.isna(z["kurs_eur"]):
             return "Kurs nicht gefunden"
-        if z["kurs_eur"] < min_kurs:
-            return f"Kurs unter {min_kurs:g} € (Penny Stock)"
         if z["kurs_eur"] >= grenze:
             return f"Kurs ab {grenze:g} €"
         if pd.isna(z["marktkap_eur"]):
             return "Marktkapitalisierung nicht gefunden"
         if z["marktkap_eur"] < min_kap:
             return f"Marktkapitalisierung unter {min_kap / 1e9:g} Mrd. €"
+        if z["kurs_eur"] < min_kurs and z["marktkap_eur"] < ausnahme_ab:
+            return f"Kurs unter {min_kurs:g} € (Penny Stock)"
         return ""
 
     gruende = tabelle.apply(grund, axis=1) if len(tabelle) else pd.Series(dtype=str)
