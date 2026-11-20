@@ -1,0 +1,196 @@
+# Recherche zu den Rückprall-Kandidaten vom 20.11.2026 – ausgefüllt per Websuche am 20.11.2026.
+# Regeln: nichts schätzen oder erfinden; fehlt etwas, "nicht gefunden" eintragen.
+# K (Kurstreiber, 0–10):
+#   8–10: bestätigter Termin in den nächsten 8 Wochen mit klarem, noch nicht eingepreistem Anlass
+#   5–7: bestätigter Termin in den nächsten 8 Wochen (z. B. Quartalszahlen), Erwartung offen
+#   2–4: Termin nur geschätzt oder später als 8 Wochen
+#   0–1: kein Termin gefunden
+# 8-Wochen-Fenster: 20.11.2026 bis 15.01.2027
+# Marktlage: S&P 500 −10,4 % und Nikkei −8,4 % in einem Monat (KI-Ausverkauf).
+stichtag: '2026-11-20'
+ideen:
+  NTAP:
+    name: NetApp
+    K: 4
+    k_begruendung: Zahlen am 01.12.2026 laut Zacks erwartet, vom Unternehmen in den Quellen nicht bestätigt.
+    kurstreiber: Quartalszahlen voraussichtlich am 01.12.2026; Konsens Gewinn je Aktie 2,60 $ (+27 % zum Vorjahr).
+    warum_bewegt: >-
+      −25,8 % im Monat bis 09.11. und −9,8 % am 05.11. im Ausverkauf von KI- und Rechenzentrumswerten
+      (Sorge um strengere Regeln für den Rechenzentrumsausbau). Keinen Grund im Unternehmen selbst gefunden –
+      eher vorübergehend, falls die Branchenstimmung dreht.
+    termine:
+      - {datum: 2026-12-01, ereignis: 'Quartalszahlen (laut Zacks erwartet)', quelle: 'Zacks via Yahoo Finance, November 2026'}
+    bull: Die Zahlen bestätigen das Wachstum; der Kurs liegt als einziger der zehn noch über der 200-Tage-Linie.
+    bear: Die Zahlen enttäuschen in einem nervösen Markt. Unterstützung 156,26 $ liegt nur 0,9 % unter dem Kurs – Schlusskurs darunter, Idee falsch.
+    eingepreist: mittel
+    bewertung: Fair zur Branche (KGV 22,2 vs. 24,1), aber teuer gegenüber der eigenen Historie (Median 16,6); erwartetes KGV 14,1.
+    setup: null
+    quellen:
+      - 'GuruFocus, 05.11.2026: Aktie −9,8 % auf 169,38 $'
+      - 'Trefis, 10.11.2026: −25,8 % im Monat bis 09.11.'
+      - 'Zacks via Yahoo Finance (November 2026): Zahlen am 01.12.2026 erwartet, EPS-Konsens 2,60 $'
+  7735.T:
+    name: SCREEN Holdings Co., Ltd.
+    K: 2
+    k_begruendung: Kein eigener Termin im Fenster gefunden; nur der BoJ-Zinsentscheid (indirekt).
+    kurstreiber: Kein fester Termin gefunden. Rekord-Auftragseingang, Jahresprognose unverändert.
+    warum_bewegt: >-
+      Q2-Umsatz +34 %, aber knapp unter der eigenen Planung; die Jahresprognose wurde trotz Rekordaufträgen nicht
+      angehoben, der Konsens lag darüber. Dazu Goldman-Sachs-Einstufung „Sell“ und Abverkauf japanischer Chipwerte.
+    termine:
+      - {datum: 2026-12-17, ereignis: 'Bank of Japan, Zinsentscheid (17./18.12.; Anhebung erwartet)', quelle: 'Reuters-Umfrage via KFGO, 18.11.2026'}
+    bull: Rekordaufträge setzen sich in Umsatz um; eine spätere Prognoseanhebung könnte den Abschlag auflösen.
+    bear: Die Chip-Investitionen kühlen ab und der Branchenabverkauf hält an. Schlusskurs unter 7.195 ¥ – Idee falsch.
+    eingepreist: mittel
+    bewertung: Günstig im Branchenvergleich (KGV 13,8 vs. 20,4), aber zyklisch.
+    setup: null
+    quellen:
+      - 'Investing.com (ohne Datum, Anfang Nov. 2026): Jahresprognose nach Q2 bestätigt, Aktie nachbörslich −5,8 %'
+      - 'Morningstar, 12.11.2026: Kurs 8.619 ¥'
+  5802.T:
+    name: Sumitomo Electric Industries, Ltd.
+    K: 2
+    k_begruendung: Kein eigener Termin im Fenster gefunden.
+    kurstreiber: Kein fester Termin gefunden.
+    warum_bewegt: >-
+      Mitgezogen im Abverkauf der japanischen Glasfaser- und Kabelwerte (KI-Rechenzentren, Sorge um
+      langsameren Rechenzentrumsbau in den USA). Keine eigene Meldung gefunden.
+    termine: []
+    bull: Die Nachfrage aus KI-Rechenzentren bleibt hoch; Sumitomo Electric ist breiter aufgestellt als reine Glasfaserwerte.
+    bear: Die KI-Infrastruktur-Wette bricht weiter ein. Schlusskurs unter dem 52-Wochen-Tief 1.251 ¥ – Idee falsch.
+    eingepreist: mittel
+    bewertung: Fair (KGV 13,4 vs. Branche 15,8 und eigener Median 12,0).
+    setup: null
+    quellen:
+      - 'Startup Fortune (ohne Datum): Abverkauf japanischer Kabelhersteller testet die KI-Infrastruktur-Wette'
+      - 'Business Recorder (ohne Datum): Nikkei dreht wegen KI-Ausblick und Nvidia-Führung'
+  NEM:
+    name: Newmont
+    K: 4
+    k_begruendung: Fed-Zinsentscheid am 09.12.2026 mit direktem Bezug zum Goldpreis.
+    kurstreiber: Fed-Zinsentscheid am 09.12.2026; Goldpreis reagiert auf Zinserwartungen und Dollar.
+    warum_bewegt: >-
+      Gold fiel auf ein 14-Monats-Tief (Terminkontrakt −3,5 % auf 3.728,80 $ am 18.11.) wegen steigender
+      Zinserwartungen und eines starken Dollars; Newmont am 18.11. −6 bis −8 %. Rohstoffbedingt, kein Firmenproblem.
+    termine:
+      - {datum: 2026-12-09, ereignis: 'Fed-Zinsentscheid (FOMC 8./9.12.)', quelle: 'Federal Reserve, Kalender Dezember 2026'}
+    bull: Dreht der Goldpreis, hebeln Minenaktien die Bewegung; Q3 mit realisiertem Goldpreis von 4.317 $/Unze.
+    bear: Gold fällt weiter, falls die Fed straffer wird. Unterstützung 94,34 $ nur 0,4 % unter dem Kurs – Schlusskurs darunter, Idee falsch.
+    eingepreist: mittel
+    bewertung: Günstig im Branchenvergleich (KGV 11,0 vs. 16,6), abhängig vom Goldpreis.
+    setup: null
+    quellen:
+      - 'Kalkine (ohne Datum): Gold auf 14-Monats-Tief, Fed-Erwartungen und Dollar'
+      - 'GuruFocus (ohne Datum): Newmont −8 % bei Goldschwäche'
+      - 'TradingKey, 18.11.2026: Newmont −5,89 %'
+  EXE:
+    name: Expand Energy
+    K: 2
+    k_begruendung: Kein eigener Termin im Fenster gefunden.
+    kurstreiber: Kein fester Termin gefunden; Erdgaspreis ist der Haupttreiber.
+    warum_bewegt: >-
+      52-Wochen-Tief am 19.11. nach gesenkten Kurszielen (Morgan Stanley 120 $, UBS 120 $) und Druck auf
+      Erdgasproduzenten. Q3 lag über den Erwartungen (bereinigtes EPS 1,46 $ vs. 1,31 $); Q4 zu rund 67 % abgesichert.
+    termine: []
+    bull: Ein kalter Winter oder höhere Gaspreise; die Absicherung dämpft das Abwärtsrisiko bei den Erträgen.
+    bear: Der Gaspreis bleibt schwach. Die Aktie steht am 52-Wochen-Tief – ein neues Tief heißt, die Idee ist falsch.
+    eingepreist: mittel
+    bewertung: Günstiger als die Branche (7,0 vs. 13,0), aber teurer als der eigene Median aus den Gas-Boomjahren (4,5); erwartetes KGV 10,5 – Analysten erwarten sinkende Gewinne.
+    setup: null
+    quellen:
+      - 'Investing.com (ohne Datum): 52-Wochen-Tief bei 83,24 $'
+      - 'Daily Political, 19.11.2026: neues 12-Monats-Tief nach Analysten-Herabstufung'
+      - 'Kalkine Media (ohne Datum): Jahrestief trotz Gewinnüberraschung'
+  BA:
+    name: Boeing
+    K: 1
+    k_begruendung: Kein Termin im Fenster gefunden.
+    kurstreiber: Kein fester Termin gefunden.
+    warum_bewegt: >-
+      −26,4 % vom 07.08. bis 05.11.; stabile Produktion von 47 Jets im Monat erst 2027, Lieferkettenprobleme;
+      am 16.11. −3,7 % nach einem Fehlstart der Vulcan-Rakete beim Gemeinschaftsunternehmen ULA.
+    termine: []
+    bull: Großer Auftragsbestand (rund 745 Mrd. $); Fortschritte bei der Produktionsrate könnten die Stimmung drehen.
+    bear: Weitere Produktionsverzögerungen. Die Aktie steht am 52-Wochen-Tief – ein neues Tief heißt, die Idee ist falsch.
+    eingepreist: mittel
+    bewertung: Nicht aussagekräftig – aktuelles KGV 16,1 und erwartetes 71,6 passen nicht zusammen; die automatische Einstufung „günstig“ nicht verwenden.
+    setup: null
+    quellen:
+      - '24/7 Wall St., 17.11.2026: Boeing 2026 −25 %'
+      - 'TradingKey, 16.11.2026: −3,68 %, Vulcan-Fehlstart'
+      - 'Cryptonomist, 20.11.2026: Schluss 19.11. bei 160,51 $'
+  NVDA:
+    name: Nvidia
+    K: 1
+    k_begruendung: Kein Termin im Fenster; die SEC-Untersuchung ist ein binäres Ereignis ohne Datum.
+    kurstreiber: >-
+      Laut WSJ/Reuters zivilrechtliche SEC-Untersuchung zu Offenlegung bzw. Bilanzierung (offiziell nicht
+      bestätigt). Suche nach einem neuen CEO nach dem Rücktritt von Jensen Huang.
+    warum_bewegt: >-
+      Huang trat als CEO zurück; Berichte über die SEC-Untersuchung; am 20.11. rund −14 % auf ein 52-Wochen-Tief,
+      obwohl das Quartal stark war und der Ausblick positiv. Ob dauerhaft, hängt am Ausgang der Untersuchung.
+    termine: []
+    bull: Die Untersuchung endet ohne Folgen und ein neuer CEO wird benannt; das Geschäft lief zuletzt stark (KGV 13,5 vs. 24,1).
+    bear: Die Untersuchung führt zu Korrekturen oder Strafen. Die Aktie steht am 52-Wochen-Tief – ein neues Tief heißt, die Idee ist falsch.
+    eingepreist: mittel
+    bewertung: Nach KGV günstig, aber mit hohem Sonderrisiko.
+    setup: null
+    quellen:
+      - 'TechCrunch, 17.11.2026: SEC untersucht Nvidia nach Huangs Rücktritt (Bericht)'
+      - 'Axios, 17.11.2026: starke Zahlen trotz Huang-Rücktritt und SEC-Bericht'
+      - 'Decrypt (ohne Datum): Aktie auf 52-Wochen-Tief'
+  ORCL:
+    name: Oracle Corporation
+    K: 2
+    k_begruendung: Kein bestätigter Termin im Fenster gefunden.
+    kurstreiber: Kein bestätigter Termin gefunden. Thema ist die Finanzierung des KI-Rechenzentrumsausbaus.
+    warum_bewegt: >-
+      Kapitalerhöhung über 20 Mrd. $ am 02.11. (davon 10 Mrd. $ Aktien, verwässernd), Aktie −9 %;
+      negativer freier Cashflow (−5,4 Mrd. $ im letzten Quartal), Rating BBB−, hohe Abhängigkeit von OpenAI.
+      Eher strukturell als vorübergehend.
+    termine: []
+    bull: Der Investitionsgipfel wird wie angekündigt FY27–28 erreicht; Bernstein sieht selbst im Stressfall rund 133 $.
+    bear: Rating-Herabstufung unter Investment Grade oder Probleme bei OpenAI. 52-Wochen-Tief – ein neues Tief heißt, die Idee ist falsch.
+    eingepreist: mittel
+    bewertung: Nach KGV günstig (15,9 vs. 24,1), aber hohe Verschuldung.
+    setup: null
+    quellen:
+      - 'Business Chief (ohne Datum): −8,8 % nach Kapitalerhöhung über 20 Mrd. $'
+      - 'Motley Fool, 16.11.2026: Sorge um OpenAI-Abhängigkeit'
+      - 'GuruFocus (ohne Datum): Schluss 19.11. bei 110,57 $, Bernstein-Stressfall 133 $'
+  SNDK:
+    name: Sandisk
+    K: 1
+    k_begruendung: Kein Termin im Fenster gefunden.
+    kurstreiber: Kein fester Termin gefunden; NAND-Preisprognosen sind der Treiber.
+    warum_bewegt: >-
+      Am 20.11. rund −14 bis −16 %, nachdem TrendForce ab Q1 2027 fallende NAND-Vertragspreise prognostizierte
+      (Kürzungen chinesischer Cloud-Anbieter); Spotpreise schon über 20 % gefallen. Split 8:1 am 19.11. ist nicht die
+      Ursache. Eher zyklisch-dauerhaft.
+    termine: []
+    bull: Die NAND-Schwäche fällt milder aus als befürchtet.
+    bear: Der Speicherzyklus dreht nach unten; das KGV von 5,1 spiegelt dann Spitzengewinne. Schlusskurs unter 69,82 $ – Idee falsch.
+    eingepreist: mittel
+    bewertung: Optisch günstig, wahrscheinlich Zyklus-Hoch der Gewinne – Value-Falle möglich.
+    setup: null
+    quellen:
+      - '24/7 Wall St., 20.11.2026: TrendForce sieht 2027 fallende NAND-Preise'
+      - 'Nacionale (ohne Datum): Split 8:1, Rückgang trotzdem real'
+  BKNG:
+    name: Booking Holdings
+    K: 1
+    k_begruendung: Kein Termin im Fenster gefunden.
+    kurstreiber: Kein fester Termin gefunden.
+    warum_bewegt: >-
+      Sorge, dass KI-Agenten (u. a. Metas Agent „Muse“) Reisende direkt zu Hotels lenken; dazu Ermittlung der
+      EU-Kommission zu Betrug auf Booking.com. Laut CEO bringen KI-Agenten bisher unter 1 % der Übernachtungen.
+    termine: []
+    bull: Die KI-Sorge erweist sich als übertrieben; hohe Rückgabe an Aktionäre.
+    bear: KI-Agenten drücken die Provisionen. Die Aktie steht am 52-Wochen-Tief – ein neues Tief heißt, die Idee ist falsch.
+    eingepreist: mittel
+    bewertung: Fair (KGV 15,7 vs. 16,8).
+    setup: null
+    quellen:
+      - 'Yahoo Finance (ohne Datum): KI-Agenten teilen Reiseaktien in Gewinner und Verlierer'
+      - 'TIKR (ohne Datum): Booking 2026 −20 %, Rückgabe an Aktionäre'
+      - '24/7 Wall St., 23.09.2026: Reiseportale fallen wegen Metas Agent Muse'

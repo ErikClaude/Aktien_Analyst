@@ -383,7 +383,8 @@ def bericht_markdown(tabelle: pd.DataFrame, top: int, stichtag: date, meta: dict
     max_p = int(ideen["max_punkte"].iloc[0]) if len(ideen) else 0
     recherchiert = bool(meta.get("recherchiert"))
     kopf = [
-        f"# Aktien-Screener – {datum_de(stichtag)}",
+        f"# {meta.get('titel') or 'Aktien-Screener'} – {datum_de(stichtag)}",
+        *([f"Auswahl: {meta['auswahl']}", ""] if meta.get("auswahl") else []),
         "",
         ("Endbericht mit Websuche (Kurstreiber, Termine, Bull-/Bear-Fall)." if recherchiert else
          "**Kandidatenbericht ohne Websuche** – Kurstreiber (K) noch nicht vergeben, "
@@ -525,15 +526,15 @@ def zeichne_chart(df: pd.DataFrame, z: dict, pfad: Path, tage: int = 250) -> Pat
 
 def schreibe_bericht(tabelle: pd.DataFrame, kurse: dict[str, pd.DataFrame], meta: dict,
                      top: int = 8, ordner: Path = PROJEKT / "reports",
-                     stichtag: date | None = None) -> Path:
-    """Schreibt reports/JJJJ-MM-TT.md und die Charts nach reports/charts/."""
+                     stichtag: date | None = None, name: str = "") -> Path:
+    """Schreibt reports/JJJJ-MM-TT[_name].md und die Charts nach reports/charts/."""
     stichtag = stichtag or date.today()
     charts = {}
     for _, z in tabelle.head(top).iterrows():
-        name = f"{stichtag.isoformat()}_{z['ticker'].replace('^', '')}.png"
-        zeichne_chart(kurse[z["ticker"]], z.to_dict(), ordner / "charts" / name)
-        charts[z["ticker"]] = f"charts/{name}"
-    pfad = ordner / f"{stichtag.isoformat()}.md"
+        bild = f"{stichtag.isoformat()}_{z['ticker'].replace('^', '')}.png"
+        zeichne_chart(kurse[z["ticker"]], z.to_dict(), ordner / "charts" / bild)
+        charts[z["ticker"]] = f"charts/{bild}"
+    pfad = ordner / f"{stichtag.isoformat()}{'_' + name if name else ''}.md"
     pfad.parent.mkdir(parents=True, exist_ok=True)
     pfad.write_text(bericht_markdown(tabelle, top, stichtag, meta, charts), encoding="utf-8")
     return pfad
@@ -679,6 +680,10 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--nur-cache", action="store_true")
     p.add_argument("--journal", action="store_true", help="Ideen in journal/ideen.csv eintragen")
     p.add_argument("--ausgabe", type=Path, default=PROJEKT / "reports", help="Ordner für Bericht und Vorlage")
+    p.add_argument("--ticker", nargs="*", help="nur diese Aktien bewerten (eigene Auswahl)")
+    p.add_argument("--name", default="", help="Zusatz im Dateinamen, z. B. rueckprall")
+    p.add_argument("--titel", default="", help="Überschrift des Berichts")
+    p.add_argument("--auswahl", default="", help="Satz zur Auswahlregel (erscheint im Kopf)")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     stichtag = date.today()
@@ -692,6 +697,11 @@ def main(argv: list[str] | None = None) -> None:
     behalten, _ = wende_filter_an(kennzahlen_fuer_filter(aktien, kurse, fx, kap),
                                   cfg_u["filter"], args.max_kurs)
     tabelle = filtere_stil(bewerte_universum(aktien, kurse, behalten, cfg_s), args.stil)
+    if args.ticker:
+        fehlt = sorted(set(args.ticker) - set(tabelle["ticker"]))
+        if fehlt:
+            log.warning("Nicht im gefilterten Universum: %s", ", ".join(fehlt))
+        tabelle = tabelle[tabelle["ticker"].isin(args.ticker)].reset_index(drop=True)
     vorauswahl = tabelle.head(args.kandidaten)
     if not args.ohne_fundamentals and len(vorauswahl):
         fund = lade_fundamentals(list(vorauswahl["ticker"]), details=True, nur_cache=args.nur_cache)
@@ -718,11 +728,14 @@ def main(argv: list[str] | None = None) -> None:
         "stil": STILE.get(args.stil, "") if args.stil else "",
         "kandidaten": min(args.kandidaten, len(tabelle)) if not args.ohne_fundamentals else 0,
         "recherchiert": bool(args.recherche),
+        "titel": args.titel, "auswahl": args.auswahl,
     }
-    pfad = schreibe_bericht(vorauswahl, kurse, meta, top, ordner=args.ausgabe, stichtag=stichtag)
+    pfad = schreibe_bericht(vorauswahl, kurse, meta, top, ordner=args.ausgabe, stichtag=stichtag,
+                            name=args.name)
     print(f"Bericht: {pfad}")
     if not args.recherche:
-        vorlage = schreibe_recherche_vorlage(vorauswahl, top, args.ausgabe / f"{stichtag}_recherche.yaml",
+        dateiname = f"{stichtag}{'_' + args.name if args.name else ''}_recherche.yaml"
+        vorlage = schreibe_recherche_vorlage(vorauswahl, top, args.ausgabe / dateiname,
                                              stichtag, cfg_s.get("kurstreiber_regel", []))
         print(f"Recherche-Vorlage: {vorlage}" if vorlage else
               "Recherche-Vorlage existiert bereits – nicht überschrieben")

@@ -168,3 +168,12 @@ def test_stil_filter(daten):
     assert (ueber["rsi14"] < 40).all()
     with pytest.raises(ValueError):
         filtere_stil(tab, "zocken")
+
+
+def test_eigener_name_und_titel(daten, tmp_path):
+    tab, kurse, meta = daten
+    pfad = schreibe_bericht(tab, kurse, {**meta, "titel": "Rückprall-Kandidaten", "auswahl": "Regel X"},
+                            top=1, ordner=tmp_path, stichtag=date(2026, 11, 20), name="rueckprall")
+    assert pfad.name == "2026-11-20_rueckprall.md"
+    text = pfad.read_text(encoding="utf-8")
+    assert text.startswith("# Rückprall-Kandidaten – 20.11.2026") and "Auswahl: Regel X" in text
