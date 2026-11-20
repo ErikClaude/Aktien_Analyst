@@ -1,0 +1,68 @@
+# Signal-Score: Gewichte und Schwellen
+#
+# Startwerte (Stand 2026-11-20). Nur nach Auswertung von Journal bzw.
+# Backtest ändern – und die Änderung im Commit begründen.
+#
+# Ausbaustufe: Bis fundamentals und Websuche angebunden sind, zählen nur
+# Technik (T), Muster (M) und Risiko (R) -> 0–30 Punkte.
+# Bewertung (B), Kurstreiber (K) und Erwartungen (E) sind "nicht bewertet".
+
+bereiche: [T, M, R]   # später: [T, M, B, K, E, R] -> 0–60
+
+# Einstufung des Gesamtscores, je Ausbaustufe.
+# 0–30: Schwellen aus CLAUDE.md (42/24 von 60) halbiert.
+klassen:
+  30: {stark_ab: 21, gemischt_ab: 12}
+  60: {stark_ab: 42, gemischt_ab: 24}
+
+# --- Technik (T): Trend, Lage zu den Linien, relative Stärke -------------
+# Punkte werden addiert und auf 0–10 begrenzt.
+technik:
+  kurs_ueber_sma200: 2
+  kurs_ueber_sma50: 1
+  sma50_ueber_sma200: 1
+  sma200_steigend: 1           # Steigung der 200-Tage-Linie über 20 Tage > 0
+  golden_cross_frisch: 1
+  death_cross_frisch: -1
+  rs_3m_positiv: 1             # besser als der Index über 3 Monate
+  rs_12m_positiv: 1
+  ruecksetzer_im_aufwaertstrend: 2  # RSI < ueberverkauft UND Aufwärtstrend
+  ueberkauft: -1               # RSI > ueberkauft: Rückschlaggefahr
+  nahe_52w_hoch_im_trend: 1    # Abstand zum Hoch <= nahe_hoch_pct im Aufwärtstrend
+  rsi_ueberkauft: 70
+  rsi_ueberverkauft: 30
+  nahe_hoch_pct: 5
+
+# --- Muster (M): nur bullische Muster bringen Punkte ----------------------
+# Wert = bestes bullisches Muster, danach Abzug für aktive bärische Muster.
+# Bestätigt, aber Kurs wieder unter der Ausbruchsmarke (Rücklauf): zählt wie "in Bildung".
+muster:
+  bullisch:
+    bestätigt:   {hoch: 9, mittel: 7, niedrig: 4}
+    in Bildung:  {hoch: 5, mittel: 4, niedrig: 2}
+    gescheitert: {hoch: 0, mittel: 0, niedrig: 0}
+  seitwaertsphase:             # Richtung offen: nur Beobachtung
+    in Bildung:  {hoch: 3, mittel: 2, niedrig: 1}
+  abzug_baerisch:
+    bestätigt: 4
+    in Bildung: 2
+
+# --- Risiko (R): 10 = geringes Risiko --------------------------------------
+# Nur aus Kursdaten. Binäre Ereignisse (Zahlen, Studien) und Verschuldung
+# kommen erst mit fundamentals / Websuche dazu.
+risiko:
+  volatilitaet_60t:            # annualisiert in %; [Grenze, Punkte], erste passende zählt
+    - [22, 4]
+    - [28, 3]
+    - [35, 2]
+    - [45, 1]
+  max_rueckgang_12m:           # größter Rückgang vom Hoch in %
+    - [18, 2]
+    - [30, 1]
+  tagesspruenge_12m:           # Tage mit Bewegung > sprung_pct
+    - [0, 2]
+    - [3, 1]
+  sprung_pct: 8
+  stopp_abstand:               # Abstand zur Invalidierung bzw. Unterstützung in %
+    - [6, 2]
+    - [12, 1]

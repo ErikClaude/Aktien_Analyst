@@ -77,6 +77,20 @@ class Muster:
     gescheitert_am: pd.Timestamp | None = None
     kriterien: list[str] = field(default_factory=list)  # erfüllte Qualitätskriterien
 
+    def ruecklauf(self, kurs: float) -> bool:
+        """Bestätigt, aber der Kurs steht wieder auf der falschen Seite der Marke.
+
+        Bullisch: Kurs < Ausbruchsmarke, bärisch: Kurs > Ausbruchsmarke.
+        Ein solcher Rücklauf ist häufig (Test der Linie), schwächt das Signal aber.
+        """
+        if self.status != "bestätigt":
+            return False
+        if self.richtung == "bullisch":
+            return kurs < self.ausbruchsmarke
+        if self.richtung == "bärisch":
+            return kurs > self.ausbruchsmarke
+        return False
+
     def als_dict(self) -> dict:
         """Flache Darstellung für Tabellen."""
         return {

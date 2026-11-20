@@ -17,3 +17,12 @@ pytest
 - Kurse laden und Filter anwenden: `PYTHONPATH=src python -m analyst.data [--markt de us jp] [--nur-cache] [--max-kurs 100]`
 - Cache in `data/prices/` und `data/meta/` (nicht versioniert). Erster Lauf ca. 6 Minuten,
   danach nur Nachladen nach Handelsschluss.
+
+## Screener-Bericht
+
+```bash
+PYTHONPATH=src python -m analyst.report [--markt de us jp] [--top 8] [--max-kurs 100] [--nur-cache]
+```
+
+Schreibt `reports/JJJJ-MM-TT.md` und Charts nach `reports/charts/`.
+Score derzeit aus Technik, Muster, Risiko (0–30); Gewichte in `config/scoring.yaml`.
