@@ -1,0 +1,253 @@
+# Recherche zu den Kandidaten vom 20.11.2026 – ausgefüllt per Websuche am 20.11.2026.
+# Regeln: nichts schätzen oder erfinden; fehlt etwas, "nicht gefunden" eintragen.
+# Jede Aussage mit Quelle und Datum unter quellen.
+# K (Kurstreiber, 0–10):
+#   8–10: bestätigter Termin in den nächsten 8 Wochen mit klarem, noch nicht eingepreistem Anlass
+#   5–7: bestätigter Termin in den nächsten 8 Wochen (z. B. Quartalszahlen), Erwartung offen
+#   2–4: Termin nur geschätzt oder später als 8 Wochen
+#   0–1: kein Termin gefunden
+#   Binäre Ereignisse (Studien, Urteile, Zahlen) erhöhen zugleich das Risiko – im Bericht nennen
+# eingepreist: niedrig | mittel | hoch
+# termine: Liste von {datum: JJJJ-MM-TT, ereignis: Text, quelle: Text}
+# 8-Wochen-Fenster: 20.11.2026 bis 15.01.2027
+stichtag: '2026-11-20'
+ideen:
+  4503.T:
+    name: Astellas Pharma Inc.
+    hinweis: 'Score vorläufig 23/40, Kurs 2.770 ¥ (Schluss 19.11.2026), Zahlentermin laut Yahoo: 03.02.2027'
+    K: 2
+    k_begruendung: Nächste Zahlen voraussichtlich Anfang Februar 2027 (nur Yahoo, nicht bestätigt) – außerhalb von 8 Wochen; kein bestätigter Termin im Fenster gefunden.
+    kurstreiber: >-
+      Kein fester Termin in den nächsten 8 Wochen gefunden. Strukturelles Thema ist das
+      Auslaufen des Schutzes für XTANDI (Prostatakrebs, über 6 Mrd. $ Jahresumsatz): Eine
+      Exklusivität endete am 17.11.2026, Generika von Enzalutamid sind in den USA zugelassen,
+      ein weiteres Patent läuft laut FDA-Schreiben bis 13.08.2027; Patentstreitigkeiten laufen.
+    warum_bewegt: >-
+      Anstieg nach den Halbjahreszahlen vom 04.11.2026: Umsatz +23,4 %, Kern-Betriebsgewinn
+      rund +50 %, Jahresprognose angehoben (Umsatz auf 2 Bio. ¥). Kurs nahe 52-Wochen-Hoch.
+      Ob der Effekt dauerhaft ist, hängt daran, wie schnell XTANDI-Umsätze an Generika verloren gehen.
+    termine:
+      - {datum: 2026-12-17, ereignis: 'Bank of Japan, Zinsentscheid (17./18.12.; Anhebung auf 1,50 % erwartet) – nur indirekt relevant', quelle: 'Reuters-Umfrage via KFGO, 18.11.2026'}
+    bull: >-
+      Die angehobene Prognose hält, neue Produkte füllen die XTANDI-Lücke schneller als befürchtet,
+      und das niedrige KGV (12,8 gegenüber 21,8 im Branchenmedian Japan) wird neu bewertet.
+    bear: >-
+      Generika drücken XTANDI-Umsätze stärker als erwartet; das niedrige KGV wäre dann eine
+      Value-Falle. Der Kurs liegt bereits über dem Ø-Kursziel (2.633 ¥). Schlusskurs unter der
+      Nackenlinie 2.413 ¥ schwächt das Bild, unter 2.182 ¥ ist die Idee falsch.
+    eingepreist: hoch
+    bewertung: >-
+      Günstig nur auf dem Papier: Das niedrige KGV spiegelt den absehbaren Wegfall des
+      wichtigsten Produkts. Value-Falle möglich.
+    setup: null
+    quellen:
+      - 'Simply Wall St (ohne Datum): Kurs +9 % nach Prognoseanhebung und AJICAP-Vereinbarung'
+      - 'GuruFocus (ohne Datum): starke H1-Zahlen; Zahlen in Quellen teils widersprüchlich (ADR-EPS 0,35 $ vs. Schätzung 0,41 $)'
+      - 'Investing.com, Jefferies Healthcare Conference (ohne Datum): Fünfjahresplan soll XTANDI-Verlust ausgleichen'
+      - 'Targeted Oncology (ohne Datum): Exklusivität einer XTANDI-Indikation endet 17.11.2026, Generika zugelassen'
+      - 'FDA, ANDA-220025-Zulassungsschreiben 2026: Patent 517 bis 13.08.2027'
+      - 'Daily Political, 19.11.2026: ADR (ALPMY) auf 52-Wochen-Hoch'
+  MET:
+    name: MetLife
+    hinweis: 'Score vorläufig 21/40, Kurs 95,67 $ (Schluss 20.11.2026), Zahlentermin laut Yahoo: 04.11.2026'
+    K: 4
+    k_begruendung: Einziger bestätigter Termin im Fenster ist der Fed-Zinsentscheid am 09.12.2026 (Branchenbezug Lebensversicherer); eigene Zahlen erst Anfang 2027 (Datum nicht gefunden).
+    kurstreiber: >-
+      Fed-Zinsentscheid am 09.12.2026 – für Lebensversicherer über die Kapitalanlagen relevant.
+      Nächste Quartalszahlen: Datum nicht gefunden (üblicherweise Anfang Februar).
+    warum_bewegt: >-
+      Q3-Zahlen am 04.11.2026 stark (bereinigtes EPS ohne Sondereffekte 2,85 $, Rekord; 650 Mio. $
+      Aktienrückkäufe). Am 05.11. fiel die Aktie trotzdem um 3 % – ein Grund wurde nicht gefunden.
+    termine:
+      - {datum: 2026-12-09, ereignis: 'Fed-Zinsentscheid (FOMC 8./9.12.)', quelle: 'Federal Reserve, Kalender Dezember 2026'}
+    bull: >-
+      Rekordergebnis und Rückkäufe tragen; erwartetes KGV 8,6 und Ø-Kursziel 111,12 $ (+16 %).
+      Ein Schlusskurs zurück über die Nackenlinie 97,66 $ würde das Doppeltop entkräften.
+    bear: >-
+      Das Doppeltop ist bestätigt (bärisches Muster, Kurs unter der Nackenlinie 97,66 $), und der
+      Kurs steht direkt an der Unterstützung 94,86 $. Schlusskurs darunter: Idee falsch.
+    eingepreist: mittel
+    bewertung: Fair im Branchenvergleich (KGV 12,5 vs. 12,7); GuruFocus sieht das KGV über dem eigenen 5-Jahres-Median.
+    setup: >-
+      Technisch angeschlagen: bestätigtes Doppeltop, Kurs direkt an der Unterstützung, RSI 37,6.
+      Fundamental solide (Rekordquartal, Rückkäufe), Bewertung fair. Das Chartbild spricht derzeit
+      gegen einen Einstieg – Signal schwach.
+    quellen:
+      - 'MetLife, Form 8-K (SEC), 04.11.2026: Q3-2026-Ergebnis'
+      - 'Barchart via Yahoo Finance (ohne Datum): Aktie +2,2 % nach den Zahlen; Umsatzangaben je nach Maß unterschiedlich'
+      - 'GuruFocus, 05.11.2026: Aktie −3,0 % auf 99,75 $, Grund nicht genannt'
+      - 'Federal Reserve, Kalender Dezember 2026: FOMC 8./9.12.2026 (vorläufig)'
+  ACGL:
+    name: Arch Capital Group
+    hinweis: 'Score vorläufig 20/40, Kurs 108,82 $ (Schluss 20.11.2026), Zahlentermin laut Yahoo: 27.10.2026'
+    K: 5
+    k_begruendung: Bestätigter Branchentermin im Fenster – Rückversicherungs-Erneuerungsrunde zum 01.01.2027; Erwartung bekannt (fallende Preise), Ausmaß offen.
+    kurstreiber: >-
+      Erneuerungsrunde zum 01.01.2027: Für Sachkatastrophen-Rückversicherung erwarten KBW mindestens
+      −10 %, J.P. Morgan −10 bis −20 %, Fitch eine Verlangsamung der Preisrückgänge. Dazu der
+      Fed-Zinsentscheid am 09.12.2026 (Kapitalerträge). Eigene Zahlen: Datum nicht gefunden.
+    warum_bewegt: >-
+      Q3-Zahlen schlugen die Erwartungen, vor allem durch höhere Kapitalerträge. Mizuho (Ziel 109 $,
+      neutral) und Morgan Stanley (113 $, equal-weight) hoben die Ziele an. Ein Insider verkaufte am
+      10.11.2026 48.661 Aktien zu Ø 108,54 $.
+    termine:
+      - {datum: 2026-12-09, ereignis: 'Fed-Zinsentscheid (FOMC 8./9.12.)', quelle: 'Federal Reserve, Kalender Dezember 2026'}
+      - {datum: 2027-01-01, ereignis: 'Rückversicherungs-Erneuerungsrunde (Preise für Sachkatastrophen erwartet −10 bis −20 %)', quelle: 'Business Insurance / Reinsurance News (J.P. Morgan, Fitch), ohne Datum'}
+    bull: >-
+      Niedriges KGV (8,9 vs. Branche 12,7); fallen die Preisrückgänge zum 01.01. milder aus als befürchtet,
+      kann ein Schlusskurs über der Nackenlinie 115,19 $ die umgekehrte Kopf-Schulter bestätigen.
+    bear: >-
+      Deutlichere Preisrückgänge zum 01.01. drücken die Margen; Analysten-Ziele (Ø 114 $) lassen
+      wenig Luft. Das Muster ist nur in Bildung; unter 92,28 $ ist es gescheitert und die Idee falsch.
+    eingepreist: mittel
+    bewertung: Fair bis günstig; das niedrige KGV spiegelt den erwarteten Abschwung im Preiszyklus der Rückversicherung.
+    setup: null
+    quellen:
+      - 'MarketBeat, 20.11.2026: Mizuho hebt Ziel auf 109 $ (neutral); Konsens „Hold“, Ø-Ziel 112,29 $'
+      - 'Defense World, 18.11.2026: Morgan Stanley Ziel 113 $ (equal-weight)'
+      - 'Google Finance (ohne Datum): Q3 über Erwartungen; Übernahme von Premier Dealer Holding'
+      - 'Business Insurance (ohne Datum): J.P. Morgan erwartet −10 bis −20 % bei Sachkatastrophen-Rückversicherung zum 01.01.2027'
+      - 'Reinsurance News (ohne Datum): Fitch erwartet weiter fallende, aber langsamer sinkende Preise'
+  CNC:
+    name: Centene Corporation
+    hinweis: 'Score vorläufig 20/40, Kurs 63,78 $ (Schluss 20.11.2026), Zahlentermin laut Yahoo: 27.10.2026'
+    K: 4
+    k_begruendung: Bestätigter Stichtag 01.01.2027 (neue Medicaid-Raten für rund 40 % des Medicaid-Umsatzes); Wirkung erst mit den Zahlen am 08.02.2027 sichtbar (außerhalb des Fensters).
+    kurstreiber: >-
+      Zum 01.01.2027 werden rund 40 % der Medicaid-Umsätze neu bepreist. Formale Prognose 2027 erst
+      mit den Q4-Zahlen, gelistet für 08.02.2027. Offener CMS-Vorschlag zu ausgeweiteten Prüfungen im
+      Medicare-Advantage-Geschäft (Kommentierungsfrist: Datum nicht gefunden).
+    warum_bewegt: >-
+      Am 18.11.2026 −7 % ohne Firmenmeldung, mit allen großen Krankenversicherern – Auslöser war ein
+      CMS-Vorschlag zu Medicare-Advantage-Prüfungen; am 19.11. weitere Verluste. Branchenrisiko,
+      dauerhaft nur, wenn der Vorschlag so umgesetzt wird.
+    termine:
+      - {datum: 2027-01-01, ereignis: 'Neue Medicaid-Raten für rund 40 % des Medicaid-Umsatzes', quelle: 'Yahoo Finance, Q3-Call-Zusammenfassung (ohne Datum)'}
+      - {datum: 2027-02-08, ereignis: 'Q4-Zahlen und Prognose 2027 (gelistet, nicht bestätigt)', quelle: 'Websuche-Zusammenfassung, ohne Primärquelle'}
+    bull: >-
+      Prognose 2026 auf über 5,20 $ EPS angehoben, Medicaid-Kostenquote verbessert; erwartetes KGV 11,4,
+      Ø-Kursziel 76,11 $ (+19 %). Entschärft sich der CMS-Vorschlag, kann sich der Branchenabschlag auflösen.
+    bear: >-
+      Regulierung ist ein binäres Risiko (CMS-Prüfungen, Medicaid-Arbeitspflichten senken die
+      Mitgliederqualität). Die umgekehrte Kopf-Schulter ist gescheitert, der Kurs steht an der
+      Unterstützung 63,36 $ – Schlusskurs darunter: Idee falsch.
+    eingepreist: mittel
+    bewertung: Nach aktuellem KGV teuer, nach erwartetem KGV (11,4) günstig – das hängt an der Prognose 2027, die noch fehlt.
+    setup: >-
+      Technisch schwach: Muster gescheitert, Kurs an der Unterstützung nach dem Branchenabverkauf vom 18./19.11.
+      Fundamental Erholungsgeschichte mit angehobener Prognose 2026, aber hohem Regulierungsrisiko.
+    quellen:
+      - 'Yahoo Finance, „What Centene (CNC) Said on Its Q3 Earnings Call“ (ohne Datum): Prognose 2026 > 5,20 $, 40 % der Medicaid-Raten zum 01.01.'
+      - 'Trefis, 19.11.2026: Kursrückgang mit Branchenwerten, keine Firmenmeldung'
+      - 'Alphastreet (ohne Datum): Centene −5,5 % im Branchenabverkauf'
+      - 'OptionBeast, 19.11.2026: CMS-Vorschlag zu Medicare-Advantage-Prüfungen, noch nicht in Kraft'
+  2002.T:
+    name: Nisshin Seifun Group Inc.
+    hinweis: 'Score vorläufig 19/40, Kurs 2.430 ¥ (Schluss 19.11.2026), Zahlentermin laut Yahoo: 29.01.2027'
+    K: 2
+    k_begruendung: Nächste Zahlen laut Yahoo am 29.01.2027 (nicht bestätigt) – außerhalb von 8 Wochen; laufender Aktienrückkauf ohne festes Datum.
+    kurstreiber: >-
+      Kein fester Termin in den nächsten 8 Wochen gefunden. Laufender Aktienrückkauf von bis zu
+      20 Mrd. ¥ bzw. 14 Mio. Aktien (Zeitraum nicht gefunden).
+    warum_bewegt: >-
+      Halbjahreszahlen am 28.10.2026: Umsatzprognose von 870 auf 900 Mrd. ¥ angehoben, Rückkauf
+      angekündigt, Nettogewinn +75,8 %. Der Gewinnsprung kommt überwiegend aus Einmaleffekten
+      (Verkauf von Beteiligungen, Wegfall der Vorjahresabschreibung); der Betriebsgewinn stieg nur um 0,8 %.
+    termine: []
+    bull: >-
+      Rückkauf und angehobene Umsatzprognose stützen den Kurs; Bewertung mit KGV 16,8 unter dem
+      Branchenmedian Japan (21,7).
+    bear: >-
+      Operativ kaum Wachstum, der Gewinnsprung ist einmalig. Der Kurs liegt über dem Ø-Kursziel
+      (2.374 ¥) nach +27 Pp. gegenüber dem Nikkei in einem Monat. Schlusskurs unter 2.187 ¥: Idee falsch.
+    eingepreist: hoch
+    bewertung: Fair; ohne die Einmaleffekte wäre das KGV höher.
+    setup: null
+    quellen:
+      - 'media-ir.com (ohne Datum): Rückkauf bis 20 Mrd. ¥, Umsatzprognose auf 900 Mrd. ¥ angehoben, Halbjahres-Nettogewinn +75,8 %'
+      - 'Websuche-Zusammenfassung japanischer Quellen: Halbjahreszahlen am 28.10.2026, Betriebsgewinn +0,8 % auf 22,82 Mrd. ¥'
+      - 'BigGo Finance (ohne Datum): Q3 FY2026 mit Abschreibung auf Indien-Hefegeschäft (Vorjahr)'
+  4452.T:
+    name: Kao Corporation
+    hinweis: 'Score vorläufig 19/40, Kurs 4.000 ¥ (Schluss 19.11.2026), Zahlentermin laut Yahoo: 04.02.2027'
+    K: 3
+    k_begruendung: Im Fenster nur der Stichtag Ende Dezember 2026 für das neue Aktionärsprogramm (geringe Kursrelevanz); Jahreszahlen laut Yahoo 04.02.2027, nicht bestätigt.
+    kurstreiber: >-
+      Neues Aktionärsprogramm, erstmals für Aktionäre zum Stichtag Ende Dezember 2026 (genaues Datum
+      nicht gefunden; ob es für Depots bei Scalable gilt, nicht geprüft). Jahreszahlen Anfang Februar 2027.
+    warum_bewegt: >-
+      Q3-Zahlen am 05.11.2026 über den Erwartungen: Betriebsgewinn 50,7 Mrd. ¥ statt erwarteter
+      45,8 Mrd. ¥, Nettogewinn nach 9 Monaten +24 %, Jahresprognose bestätigt. Kurs vor den Zahlen
+      bei rund 3.400 ¥, danach rund 4.000 ¥.
+    termine: []
+    bull: >-
+      Operative Erholung bestätigt, 36 Jahre steigende Dividende; ein Schlusskurs über der Nackenlinie
+      4.034 ¥ würde die umgekehrte Kopf-Schulter bestätigen.
+    bear: >-
+      Bewertung bereits über dem Branchenmedian (KGV 25,7 vs. 21,7) nach einem Anstieg um rund 17 %
+      seit Oktober. Muster nur in Bildung; unter 3.360 ¥ gescheitert und Idee falsch.
+    eingepreist: hoch
+    bewertung: Fair bis teuer im Branchenvergleich; die Erholung ist im Kurs weitgehend enthalten.
+    setup: null
+    quellen:
+      - 'Investing.com (ohne Datum): Q3-Betriebsgewinn 50,7 Mrd. ¥, über Erwartung'
+      - 'Kabutan, 05.11.2026: 9-Monats-Nettogewinn +24 %, Q3 +12 %'
+      - 'Kabuyoho/Websuche: Schlusskurs 13.11.2026 4.006 ¥, Dividendenrendite 1,95 %'
+      - 'LIMO via Yahoo! Finance Japan (ohne Datum): 36 Jahre Dividendensteigerung, neues Aktionärsprogramm ab Stichtag Ende Dezember 2026'
+  2503.T:
+    name: Kirin Holdings Company, Limited
+    hinweis: 'Score vorläufig 19/40, Kurs 3.130 ¥ (Schluss 19.11.2026), Zahlentermin laut Yahoo: 11.02.2027'
+    K: 2
+    k_begruendung: Jahreszahlen laut Yahoo 11.02.2027 (nicht bestätigt) – außerhalb von 8 Wochen.
+    kurstreiber: >-
+      Kein fester Termin in den nächsten 8 Wochen gefunden. Offene Punkte: Folgen des Datenlecks bei
+      FANCL/Attenir und die Übernahme von Jamieson Wellness (rund 218 Mrd. ¥).
+    warum_bewegt: >-
+      9-Monats-Zahlen am 11.11.2026 mit Gewinnplus und bestätigter Jahresprognose (Quellen nennen
+      unterschiedliche Steigerungsraten: +18 % bzw. +43 %). Datenleck bei FANCL/Attenir im Oktober
+      (rund 785.000 Mitglieder betroffen); laut Kirin bisher keine wesentliche Auswirkung festgestellt.
+    termine: []
+    bull: >-
+      Starkes Alkoholgeschäft, bestätigte Prognose; KGV 12,5 deutlich unter dem Branchenmedian Japan (21,7).
+    bear: >-
+      Kurs über dem Ø-Kursziel (2.972 ¥); Datenleck und Übernahmefinanzierung können belasten. Der Kurs
+      steht nahe der Unterstützung 3.040 ¥ – Schlusskurs darunter: Idee falsch.
+    eingepreist: hoch
+    bewertung: Nach KGV günstig; ob das aktuelle KGV durch Einmaleffekte gedrückt ist, wurde nicht gefunden.
+    setup: null
+    quellen:
+      - 'Investing.com / Yahoo Finance SG (ohne Datum): 9-Monats-Gewinn steigt um 18 %, Prognose bestätigt'
+      - 'Tokyo Brief (ohne Datum): Datenleck betrifft 785.000 FANCL- und Attenir-Mitglieder'
+      - 'Ad-hoc-news (ohne Datum): FANCL-Datenleck 368.184 Mitglieder'
+      - 'Google Finance (ohne Datum): Genehmigung der Jamieson-Wellness-Übernahme für rund 218,3 Mrd. ¥'
+  G24.DE:
+    name: Scout24
+    hinweis: 'Score vorläufig 19/40, Kurs 80,75 € (Schluss 20.11.2026), Zahlentermin laut Yahoo: 04.11.2026'
+    K: 2
+    k_begruendung: Jahreszahlen am 25.02.2027 bestätigt – außerhalb von 8 Wochen; kein Termin im Fenster gefunden.
+    kurstreiber: >-
+      Kein fester Termin in den nächsten 8 Wochen. Vorläufige Jahreszahlen am 25.02.2027.
+      Hauptthema ist die Debatte, ob KI-Suchagenten Immobilienportale umgehen.
+    warum_bewegt: >-
+      Am 20.11.2026 −8 %: JPMorgan stufte von Overweight auf Neutral ab, Ziel 84 € (zuvor 101 €), weil
+      KI-Agenten direkt auf Makler-Websites suchen könnten. Operativ stark: Q3-Umsatz +19,7 % (organisch
+      +10,1 %), Umsatzprognose 2026 auf rund 18 % konkretisiert, Rückkäufe 165 Mio. € im Quartal.
+      Ob die KI-Sorge vorübergehend oder dauerhaft ist, ist offen.
+    termine:
+      - {datum: 2027-02-25, ereignis: 'Vorläufige Jahreszahlen 2026', quelle: 'aktiencheck.de / ad-hoc-news.de, November 2026'}
+    bull: >-
+      Zweistelliges organisches Wachstum, hohe Marge (EBITDA-Marge 60,9 %) und Rückkäufe; Deutsche Bank
+      (126 €) und LBBW (102 €) bleiben positiv. Ein Kursziel-Durchschnitt um 109 € liegt weit über dem Kurs.
+    bear: >-
+      Setzt sich die KI-Sorge fest, drohen weitere Abstufungen und ein niedrigeres Bewertungsniveau.
+      Der Kurs steht direkt an der Unterstützung 79,47 € – Schlusskurs darunter: Idee falsch.
+    eingepreist: mittel
+    bewertung: Günstiger als die eigene Historie; Branchenvergleich mangels Werten nicht möglich. Das Ø-Kursziel enthält eventuell noch nicht die Abstufung vom 20.11.
+    setup: >-
+      Frischer Rücksetzer um 8 % nach einer Abstufung, Kurs an der Unterstützung, RSI 39. Fundamental
+      wächst das Geschäft zweistellig; der Streitpunkt ist ein Strukturrisiko durch KI, kein Zahlenproblem.
+    quellen:
+      - 'ad-hoc-news.de, 20.11.2026: JPMorgan stuft ab, Aktie −4,95 % vorbörslich bei 83,45 €'
+      - 'ms-aktuell.de, 20.11.2026: Aktie schließt 8 % tiefer'
+      - 'ad-hoc-news.de / investor-verlag.de, 04.11.2026: Q3-Umsatz +19,7 %, Prognose rund 18 %'
+      - 'aktiencheck.de (November 2026): Deutsche Bank Ziel 126 €, Jahreszahlen 25.02.2027'
