@@ -11,14 +11,18 @@ Aufruf:  PYTHONPATH=src python -m analyst.report [--markt de us jp] [--top 8] [-
 
 from __future__ import annotations
 
+import logging
 import math
 from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
 from analyst.scoring import _fmt
 from analyst.universe import PROJEKT
+
+log = logging.getLogger(__name__)
 
 GEBUEHR_EUR = 0.99
 ABSCHLUSS = "Recherche-Ideen, keine Anlageberatung – Kurse und Termine vor dem Kauf selbst prüfen."
@@ -90,7 +94,11 @@ def setup_text(z: dict) -> str:
         saetze.append(f"{m.name} ({m.status}, Sicherheit {m.sicherheit}).")
     else:
         saetze.append("Kein Chartmuster erkannt.")
-    saetze.append("Fundamentaldaten noch nicht bewertet.")
+    if isinstance(z.get("fazit"), str) and z["fazit"] not in ("nicht gefunden", "nicht bewertbar"):
+        saetze.append(f"Bewertung {z['fazit']} (KGV {_fmt(z['kgv'])} vs. Branche "
+                      f"{_fmt(z['kgv_branche']) if _hat(z, 'kgv_branche') else 'nicht gefunden'}).")
+    else:
+        saetze.append("Bewertung nicht gefunden.")
     return " ".join(saetze)
 
 
@@ -143,24 +151,121 @@ def bull_bear(z: dict) -> tuple[str, str]:
     return bull, bear
 
 
-def idee_markdown(z: dict, rang: int, chart: str | None) -> str:
+def _hat(z: dict, feld: str) -> bool:
+    """True, wenn ein Feld vorhanden und nicht leer/NaN ist."""
+    v = z.get(feld)
+    if v is None:
+        return False
+    if isinstance(v, float) and math.isnan(v):
+        return False
+    return v != "" and v != []
+
+
+def _recherche(z: dict) -> dict:
+    """Recherche-Teil einer Idee (von Claude per Websuche), sonst leer."""
+    r = z.get("recherche")
+    return r if isinstance(r, dict) else {}
+
+
+def score_zeile(z: dict) -> str:
+    """Teilpunkte in drei Gruppen: gewertet, noch nicht bewertet, nur angezeigt.
+
+    B und E gelten als bewertet, wenn Fundamentaldaten verarbeitet wurden,
+    K erst nach der Websuche (Recherche-Datei).
+    """
+    berechnet = {"T": True, "M": True, "R": True,
+                 "B": isinstance(z.get("gruende_B"), list),
+                 "E": isinstance(z.get("gruende_E"), list),
+                 "K": bool(_recherche(z))}
+    gewertet = [b for b in ("T", "B", "K", "E") if berechnet[b] and b in z["gewertet"]]
+    offen = [b for b in ("B", "K", "E") if not berechnet[b]]
+    angezeigt = [b for b in ("M", "R") if b not in z["gewertet"]]
+    teile = [" · ".join(f"{b} {z[b]}" for b in gewertet) + " (gewertet)"]
+    if offen:
+        teile.append(", ".join(offen) + ": noch nicht bewertet")
+    if angezeigt:
+        teile.append(" · ".join(f"{b} {z[b]}" for b in angezeigt) + " (nur angezeigt)")
+    return " · ".join(teile) + f" · **{z['klasse']}**"
+
+
+def bewertung_zeilen(z: dict) -> list[str]:
+    """Bewertungsabschnitt mit Kennzahlen und Stand."""
+    if not _hat(z, "fazit") or z["fazit"] == "nicht gefunden":
+        return ["**Bewertung:** nicht gefunden (keine Fundamentaldaten von Yahoo)"]
+    stand = datum_de(z["fund_stand"][:10]) if _hat(z, "fund_stand") else "nicht gefunden"
+    zeilen = [
+        f"**Bewertung: {z['fazit']}** (Kennzahlen Yahoo Finance, Stand {stand})",
+        f"- KGV aktuell {_fmt(z['kgv']) if _hat(z, 'kgv') else 'nicht gefunden'}, "
+        f"erwartet {_fmt(z['kgv_erwartet']) if _hat(z, 'kgv_erwartet') else 'nicht gefunden'}",
+        f"- Branche ({z.get('branche_basis', 'nicht gefunden')}): KGV-Median "
+        f"{_fmt(z['kgv_branche']) if _hat(z, 'kgv_branche') else 'nicht gefunden'}, EV/EBITDA-Median "
+        f"{_fmt(z['ev_ebitda_branche']) if _hat(z, 'ev_ebitda_branche') else 'nicht gefunden'}",
+        f"- eigener KGV-Schnitt: "
+        + (f"{_fmt(z['kgv_hist'])} ({z['kgv_hist_jahre']} Geschäftsjahre)" if _hat(z, "kgv_hist")
+           else "nicht gefunden"),
+        f"- EV/EBITDA {_fmt(z['ev_ebitda']) if _hat(z, 'ev_ebitda') else 'nicht gefunden'}",
+    ]
+    if _recherche(z).get("bewertung"):
+        zeilen.append(f"- Einordnung: {_recherche(z)['bewertung']}")
+    return zeilen
+
+
+def erwartungs_zeilen(z: dict) -> list[str]:
+    """Analysten und Schätzungen."""
+    w = z["waehrung"]
+    if not _hat(z, "kursziel") and not _hat(z, "analysten"):
+        return ["**Analysten:** nicht gefunden"]
+    return [
+        "**Analysten** (Yahoo Finance)",
+        f"- Ø-Kursziel {preis(z.get('kursziel', math.nan), w)} "
+        f"({prozent(z.get('kursziel_abstand_pct', math.nan))} zum Kurs), Spanne "
+        f"{preis(z.get('kursziel_tief', math.nan), w)} bis {preis(z.get('kursziel_hoch', math.nan), w)}, "
+        f"{zahl(z.get('analysten', math.nan), 0)} Analysten",
+        f"- Gewinnschätzung nächstes Jahr: {prozent(z.get('eps_trend_pct', math.nan))} in 90 Tagen",
+    ]
+
+
+def kurstreiber_zeilen(z: dict, stichtag: date) -> list[str]:
+    """Kurstreiber aus der Recherche, sonst nur der ungeprüfte Yahoo-Hinweis."""
+    r = _recherche(z)
+    zeilen = []
+    if r.get("kurstreiber"):
+        zeilen.append(f"**Kurstreiber:** {r['kurstreiber']}")
+    else:
+        zeilen.append("**Kurstreiber:** nicht geprüft (Websuche mit /top-aktien)")
+    for t in r.get("termine") or []:
+        zeilen.append(f"- {datum_de(t['datum'])}: {t['ereignis']}"
+                      + (f" ({t['quelle']})" if t.get("quelle") else ""))
+    if not r.get("termine") and _hat(z, "zahlentermin_yahoo"):
+        d = pd.Timestamp(z["zahlentermin_yahoo"])
+        if d.date() >= stichtag:
+            zeilen.append(f"- Zahlentermin laut Yahoo (ungeprüft): {datum_de(d)}")
+        else:
+            zeilen.append(f"- letzter Zahlentermin laut Yahoo: {datum_de(d)}; nächster nicht gefunden")
+    if r.get("warum_bewegt"):
+        zeilen.append(f"- Warum bewegt: {r['warum_bewegt']}")
+    return zeilen
+
+
+def idee_markdown(z: dict, rang: int, chart: str | None, stichtag: date | None = None) -> str:
     """Abschnitt für eine Idee (tablet-freundlich: Listen, keine Tabellen)."""
+    stichtag = stichtag or date.today()
     w = z["waehrung"]
     idx = INDEXNAMEN.get(z["index"], z["index"])
-    bull, bear = bull_bear(z)
+    r = _recherche(z)
+    bull_t, bear_t = bull_bear(z)
     gebuehr = gebuehr_anteil(z["kurs_eur"])
     abstand_stopp = ((z["kurs"] - z["stopp"]) / z["kurs"] * 100
                      if not math.isnan(z["stopp"]) else math.nan)
     kreuzung = (f" · {z['kreuzung']} am {datum_de(z['kreuzung_datum'])}" if z["kreuzung"] else "")
     eur_hinweis = "" if w == "EUR" else f" ≈ {preis(z['kurs_eur'], 'EUR')}"
+    setup = r.get("setup") or setup_text(z)
 
     teile = [
         f"### {rang}. {z['name']} ({z['ticker']}, {boerse(z['ticker'])}) – Score {z['gesamt']}/{z['max_punkte']}",
-        f"T {z['T']} · M {z['M']} · R {z['R']} · gewertet: {', '.join(z['gewertet'])}"
-        + (f" (übrige nur angezeigt)" if len(z["gewertet"]) < 3 else "")
-        + f" · B, K, E: nicht bewertet · **{z['klasse']}**",
+        score_zeile(z),
         "",
-        f"**Setup:** {setup_text(z)}",
+        f"**Setup:** {setup}",
         "",
         "**Kurs & Trend**",
         f"- Kurs: {preis(z['kurs'], w)}{eur_hinweis} (Schluss {datum_de(z['datum'])})",
@@ -175,21 +280,23 @@ def idee_markdown(z: dict, rang: int, chart: str | None) -> str:
         f"- Volumen: {_fmt(z['volumen_faktor'])}-fach des 30-Tage-Schnitts"
         + (" – auffällig" if z["volumen_auffaellig"] else ""),
         "",
-        "**Muster**",
+        "**Muster** (zählt derzeit nicht im Score)" if "M" not in z["gewertet"] else "**Muster**",
         *[f"- {x}" for x in muster_zeilen(z)],
         "",
         f"**Invalidierung der Idee:** {preis(z['stopp'], w)} ({z['stopp_art']}), "
         f"{prozent(-abstand_stopp) if not math.isnan(abstand_stopp) else 'Abstand nicht gefunden'} vom Kurs",
         "",
-        "**Bewertung:** nicht bewertet (Fundamentaldaten folgen mit dem Modul fundamentals)",
+        *bewertung_zeilen(z),
         "",
-        "**Kurstreiber:** nicht geprüft (Websuche folgt mit /top-aktien)",
+        *erwartungs_zeilen(z),
         "",
-        f"**Bull-Fall (technisch):** {bull}",
+        *kurstreiber_zeilen(z, stichtag),
         "",
-        f"**Bear-Fall (technisch):** {bear}",
+        f"**Bull-Fall:** {r['bull']}" if r.get("bull") else f"**Bull-Fall (technisch):** {bull_t}",
         "",
-        "**Eingepreist?** nicht bewertet",
+        f"**Bear-Fall:** {r['bear']}" if r.get("bear") else f"**Bear-Fall (technisch):** {bear_t}",
+        "",
+        f"**Eingepreist?** {r['eingepreist']}" if r.get("eingepreist") else "**Eingepreist?** nicht bewertet",
         "",
     ]
     if z["warnungen"]:
@@ -201,15 +308,28 @@ def idee_markdown(z: dict, rang: int, chart: str | None) -> str:
         "",
         "**Score-Begründung**",
         f"- T {z['T']}: " + ("; ".join(z["gruende_T"]) or "keine Punkte"),
-        f"- M {z['M']}: " + ("; ".join(z["gruende_M"]) or "kein bullisches Muster"),
-        f"- R {z['R']}: " + "; ".join(z["gruende_R"]),
+    ]
+    if "gruende_B" in z and isinstance(z["gruende_B"], list):
+        teile.append(f"- B {z['B']}: " + "; ".join(z["gruende_B"]))
+    if r:
+        teile.append(f"- K {z['K']}: {r.get('k_begruendung', 'Recherche')}")
+    if "gruende_E" in z and isinstance(z["gruende_E"], list):
+        teile.append(f"- E {z['E']}: " + "; ".join(z["gruende_E"]))
+    teile += [
+        f"- M {z['M']} (nicht gewertet): " + ("; ".join(z["gruende_M"]) or "kein bullisches Muster"),
+        f"- R {z['R']} (nicht gewertet): " + "; ".join(z["gruende_R"]),
         "",
     ]
     if chart:
         teile += [f"![Chart {z['ticker']}]({chart})", ""]
     fx = "" if w == "EUR" else f"; Wechselkurs EUR/{w} Yahoo Finance"
-    teile += [f"**Quellen:** Kursdaten Yahoo Finance (yfinance), Schluss {datum_de(z['datum'])}; "
-              f"Index {idx} Yahoo Finance{fx}", ""]
+    quellen = (f"Kursdaten Yahoo Finance (yfinance), Schluss {datum_de(z['datum'])}; "
+               f"Index {idx} Yahoo Finance{fx}")
+    if _hat(z, "fund_stand"):
+        quellen += f"; Kennzahlen und Analystendaten Yahoo Finance, Stand {datum_de(z['fund_stand'][:10])}"
+    teile.append(f"**Quellen:** {quellen}")
+    teile += [f"- {q}" for q in r.get("quellen") or []]
+    teile.append("")
     return "\n".join(teile)
 
 
@@ -226,38 +346,64 @@ BEGRIFFE = [
     "**50-/200-Tage-Linie:** Durchschnitt der letzten 50 bzw. 200 Schlusskurse.",
     "**Golden Cross / Death Cross:** 50-Tage-Linie schneidet die 200-Tage-Linie von unten / von oben.",
     "**Pp. (Prozentpunkte):** Differenz zweier Prozentwerte, hier Aktie minus Index.",
+    "**KGV:** Kurs-Gewinn-Verhältnis – Kurs geteilt durch den Gewinn je Aktie.",
+    "**EV/EBITDA:** Unternehmenswert (inkl. Schulden) geteilt durch den operativen Gewinn vor Abschreibungen.",
     "**Nackenlinie / Ausbruchsmarke:** Linie, deren Durchbruch ein Muster bestätigt.",
     "**Invalidierung:** Marke, bei deren Unterschreiten die Idee falsch ist.",
     "**Messziel:** klassische Faustregel (Musterhöhe ab der Nackenlinie), keine Prognose.",
 ]
 
 
+def termine_zeilen(ideen: pd.DataFrame, stichtag: date) -> list[str]:
+    """Alle Termine der Ideen chronologisch; ungeprüfte Yahoo-Termine gekennzeichnet."""
+    liste = []
+    for _, z in ideen.iterrows():
+        z = z.to_dict()
+        r = _recherche(z)
+        for t in r.get("termine") or []:
+            liste.append((pd.Timestamp(t["datum"]), f"{z['name']} ({z['ticker']}): {t['ereignis']}"))
+        if not r.get("termine") and _hat(z, "zahlentermin_yahoo"):
+            d = pd.Timestamp(z["zahlentermin_yahoo"])
+            if d.date() >= stichtag:
+                liste.append((d, f"{z['name']} ({z['ticker']}): Zahlen laut Yahoo (ungeprüft)"))
+    if not liste:
+        return ["Keine Termine gefunden – vor jedem Kauf den nächsten Zahlentermin selbst prüfen."]
+    return [f"- {datum_de(d)} – {text}" for d, text in sorted(liste, key=lambda x: x[0])]
+
+
 def bericht_markdown(tabelle: pd.DataFrame, top: int, stichtag: date, meta: dict,
                      charts: dict[str, str] | None = None) -> str:
     """Gesamter Bericht als Markdown.
 
-    ``meta``: Kontext für den Kopf (universum, gefiltert, ausgeschlossen_gruende,
-    kursstand je Markt, wechselkurse, max_kurs).
+    ``meta``: Kontext für den Kopf (universum, gefiltert, kursstand je Markt,
+    wechselkurse, max_kurs, gewichte, gewichte_grund, stil, kandidaten, recherchiert).
     """
     charts = charts or {}
     ideen = tabelle.head(top)
-    max_p = int(ideen["max_punkte"].iloc[0]) if len(ideen) else 30
+    max_p = int(ideen["max_punkte"].iloc[0]) if len(ideen) else 0
+    recherchiert = bool(meta.get("recherchiert"))
     kopf = [
         f"# Aktien-Screener – {datum_de(stichtag)}",
         "",
+        ("Endbericht mit Websuche (Kurstreiber, Termine, Bull-/Bear-Fall)." if recherchiert else
+         "**Kandidatenbericht ohne Websuche** – Kurstreiber (K) noch nicht vergeben, "
+         "Bull-/Bear-Fall nur technisch."),
+        "",
         f"Score 0–{max_p}. Gewichte: "
         + ", ".join(f"{b} {w}" for b, w in meta.get("gewichte", {}).items())
-        + ". Bereiche mit Gewicht 0 werden angezeigt, zählen aber nicht. "
-        "Bewertung, Kurstreiber und Erwartungen sind noch nicht enthalten.",
+        + ". Bereiche mit Gewicht 0 werden angezeigt, zählen aber nicht.",
         "",
         *([f"Grund der Gewichtung: {meta['gewichte_grund']}", ""] if meta.get("gewichte_grund") else []),
         "**Datenlage**",
         f"- Universum: {meta['universum']} Aktien, nach Filtern {meta['gefiltert']} "
-        f"(Kurs unter {zahl(meta['max_kurs'], 0)} €, Marktkap. ab 1 Mrd. €), bewertet {len(tabelle)}",
+        f"(Kurs unter {zahl(meta['max_kurs'], 0)} €, Marktkap. ab 1 Mrd. €)"
+        + (f", Stil „{meta['stil']}“" if meta.get("stil") else ""),
+        *([f"- Vorauswahl: die {meta['kandidaten']} technisch stärksten; nur sie haben Fundamentaldaten"]
+          if meta.get("kandidaten") else []),
         *[f"- Kursstand {k}: {datum_de(v)}" for k, v in meta.get("kursstand", {}).items()],
         *[f"- Wechselkurs: 1 € = {zahl(v[1], 4)} {k} (Stand {datum_de(v[0])})"
           for k, v in meta.get("wechselkurse", {}).items()],
-        "- Kurse aus Yahoo Finance können verzögert oder lückenhaft sein.",
+        "- Kurse und Kennzahlen aus Yahoo Finance können verzögert oder lückenhaft sein.",
         "",
         "**Begriffe**",
         *[f"- {b}" for b in BEGRIFFE],
@@ -268,18 +414,18 @@ def bericht_markdown(tabelle: pd.DataFrame, top: int, stichtag: date, meta: dict
     for i, (_, z) in enumerate(ideen.iterrows(), 1):
         m = z["haupt_muster"]
         kurz = f"{m.name} ({m.status})" if m is not None else "kein Muster"
+        fazit = f", Bewertung {z['fazit']}" if "fazit" in z and isinstance(z["fazit"], str) else ""
         kopf.append(f"{i}. **{z['name']}** ({z['ticker']}) – {z['gesamt']}/{z['max_punkte']} "
-                    f"{z['klasse']} – {z['trend']}, {kurz}")
+                    f"{z['klasse']} – {z['trend']}{fazit}, {kurz}")
     kopf += ["", "Hohes Potenzial geht fast immer mit hohem Risiko einher. "
              "Der Score fasst Indizien zusammen, er ist keine Prognose.", "", "## Ideen", ""]
 
-    rumpf = [idee_markdown(z.to_dict(), i, charts.get(z["ticker"]))
+    rumpf = [idee_markdown(z.to_dict(), i, charts.get(z["ticker"]), stichtag)
              for i, (_, z) in enumerate(ideen.iterrows(), 1)]
     schluss = [
         "## Termine der nächsten Wochen",
         "",
-        "Noch nicht geprüft – Termine kommen per Websuche mit /top-aktien. "
-        "Bis dahin vor jedem Kauf den nächsten Zahlentermin selbst prüfen.",
+        *termine_zeilen(ideen, stichtag),
         "",
         "---",
         "",
@@ -393,24 +539,149 @@ def schreibe_bericht(tabelle: pd.DataFrame, kurse: dict[str, pd.DataFrame], meta
     return pfad
 
 
+# --------------------------------------------------------------------------
+# Stil, Recherche-Vorlage, Recherche einlesen
+# --------------------------------------------------------------------------
+
+STILE = {
+    "ueberverkauft": "RSI unter 40",
+    "muster": "bullisches Muster bestätigt oder in Bildung",
+    "ausbruch": "Ausbruch nach oben oder laufende Seitwärtsphase",
+}
+
+
+def filtere_stil(tabelle: pd.DataFrame, stil: str | None) -> pd.DataFrame:
+    """Optionaler Stil-Filter von /top-aktien (siehe ``STILE``)."""
+    if not stil:
+        return tabelle
+    if stil not in STILE:
+        raise ValueError(f"Unbekannter Stil {stil!r}, erlaubt: {', '.join(STILE)}")
+
+    def passt(z) -> bool:
+        muster = z["alle_muster"] or []
+        if stil == "ueberverkauft":
+            return z["rsi14"] < 40
+        if stil == "muster":
+            return any(m.richtung == "bullisch" and m.status in ("bestätigt", "in Bildung") for m in muster)
+        return any(m.name == "Ausbruch nach oben" and m.status == "bestätigt" or m.name == "Seitwärtsphase"
+                   for m in muster)
+
+    return tabelle[tabelle.apply(passt, axis=1)].reset_index(drop=True)
+
+
+RECHERCHE_FELDER = ["K", "k_begruendung", "kurstreiber", "warum_bewegt", "termine", "bull", "bear",
+                    "eingepreist", "bewertung", "setup", "quellen"]
+
+
+def schreibe_recherche_vorlage(tabelle: pd.DataFrame, top: int, pfad: Path, stichtag: date,
+                               kurstreiber_regel: list[str]) -> Path | None:
+    """YAML-Vorlage für die Websuche. Überschreibt nie eine vorhandene Datei."""
+    if pfad.exists():
+        return None
+    kopf = [
+        f"# Recherche zu den Kandidaten vom {datum_de(stichtag)} – auszufüllen per Websuche.",
+        "# Regeln: nichts schätzen oder erfinden; fehlt etwas, \"nicht gefunden\" eintragen.",
+        "# Jede Aussage mit Quelle und Datum unter quellen.",
+        "# K (Kurstreiber, 0–10):",
+        *[f"#   {r}" for r in kurstreiber_regel],
+        "# eingepreist: niedrig | mittel | hoch",
+        "# termine: Liste von {datum: JJJJ-MM-TT, ereignis: Text, quelle: Text}",
+        "# Ideen, die nach der Recherche nicht in den Bericht sollen, ganz löschen.",
+        "",
+    ]
+    ideen = {}
+    for _, z in tabelle.head(top).iterrows():
+        ideen[z["ticker"]] = {
+            "name": z["name"],
+            "hinweis": (f"Score vorläufig {z['gesamt']}/{z['max_punkte']}, Kurs {preis(z['kurs'], z['waehrung'])} "
+                        f"(Schluss {datum_de(z['datum'])}), Zahlentermin laut Yahoo: "
+                        f"{datum_de(z['zahlentermin_yahoo']) if _hat(z.to_dict(), 'zahlentermin_yahoo') else 'nicht gefunden'}"),
+            **{f: ([] if f in ("termine", "quellen") else None) for f in RECHERCHE_FELDER},
+        }
+    pfad.parent.mkdir(parents=True, exist_ok=True)
+    pfad.write_text("\n".join(kopf) + yaml.safe_dump({"stichtag": stichtag.isoformat(), "ideen": ideen},
+                                                     allow_unicode=True, sort_keys=False, width=100),
+                    encoding="utf-8")
+    return pfad
+
+
+def lade_recherche(pfad: Path) -> dict:
+    """Recherche-Datei lesen und prüfen (K 0–10, eingepreist, Termine mit Datum)."""
+    daten = yaml.safe_load(Path(pfad).read_text(encoding="utf-8")) or {}
+    ideen = daten.get("ideen") or {}
+    fehler = []
+    for t, r in ideen.items():
+        k = r.get("K")
+        if not isinstance(k, int) or not 0 <= k <= 10:
+            fehler.append(f"{t}: K muss eine ganze Zahl von 0 bis 10 sein (ist {k!r})")
+        if r.get("eingepreist") not in (None, "niedrig", "mittel", "hoch"):
+            fehler.append(f"{t}: eingepreist muss niedrig, mittel oder hoch sein")
+        for termin in r.get("termine") or []:
+            if "datum" not in termin or "ereignis" not in termin:
+                fehler.append(f"{t}: Termin braucht datum und ereignis")
+    if fehler:
+        raise ValueError("Recherche-Datei unvollständig:\n" + "\n".join(fehler))
+    return daten
+
+
+def wende_recherche_an(tabelle: pd.DataFrame, recherche: dict, cfg: dict) -> pd.DataFrame:
+    """Übernimmt K und die Texte; Bericht enthält dann genau die recherchierten Ideen."""
+    from analyst.scoring import gesamtscore, klasse
+
+    ideen = recherche.get("ideen") or {}
+    fehlend = sorted(set(ideen) - set(tabelle["ticker"]))
+    if fehlend:
+        log.warning("Recherche enthält Ticker ohne aktuelle Bewertung: %s", ", ".join(fehlend))
+    zeilen = []
+    for _, z in tabelle[tabelle["ticker"].isin(ideen)].iterrows():
+        z = z.to_dict()
+        r = ideen[z["ticker"]]
+        z["K"] = int(r["K"])
+        z["recherche"] = r
+        teile = {b: z.get(b, 0) for b in ("T", "M", "R", "B", "K", "E")}
+        z["gesamt"], z["max_punkte"] = gesamtscore(teile, cfg)
+        z["klasse"] = klasse(z["gesamt"], z["max_punkte"], cfg)
+        zeilen.append(z)
+    if not zeilen:
+        return tabelle.iloc[:0]
+    return pd.DataFrame(zeilen).sort_values(cfg["sortierung"], ascending=False).reset_index(drop=True)
+
+
+# --------------------------------------------------------------------------
+# Kommandozeile
+# --------------------------------------------------------------------------
+
 def main(argv: list[str] | None = None) -> None:
-    """Gesamter Lauf: Daten, Filter, Score, Bericht."""
+    """Lauf für /top-aktien.
+
+    Stufe 1 (ohne --recherche): Daten, Filter, Technik, Vorauswahl, Fundamentaldaten
+      -> Kandidatenbericht reports/JJJJ-MM-TT.md und Vorlage reports/JJJJ-MM-TT_recherche.yaml
+    Stufe 2 (mit --recherche DATEI): K und Texte aus der Websuche übernehmen
+      -> Endbericht; mit --journal Eintrag ins Ideen-Journal
+    """
     import argparse
     import logging
 
     from analyst.data import (kennzahlen_fuer_filter, lade_markt, lade_marktkap,
                               lade_wechselkurse)
+    from analyst.fundamentals import ergaenze_fundamentals, lade_fundamentals
     from analyst.scoring import bewerte_universum, lade_scoring_config
     from analyst.universe import lade_config, lade_universum, wende_filter_an
 
     p = argparse.ArgumentParser(description="Screener-Bericht erstellen")
     p.add_argument("--markt", nargs="*", help="de, us, jp (Standard: alle)")
+    p.add_argument("--stil", choices=list(STILE), help="optionaler Stil-Filter")
     p.add_argument("--top", type=int, default=8)
+    p.add_argument("--kandidaten", type=int, default=40, help="Vorauswahl für Fundamentaldaten")
     p.add_argument("--max-kurs", type=float, help="Preisgrenze in Euro")
+    p.add_argument("--recherche", type=Path, help="ausgefüllte Recherche-Datei (Stufe 2)")
+    p.add_argument("--ohne-fundamentals", action="store_true")
     p.add_argument("--nur-cache", action="store_true")
     p.add_argument("--journal", action="store_true", help="Ideen in journal/ideen.csv eintragen")
+    p.add_argument("--ausgabe", type=Path, default=PROJEKT / "reports", help="Ordner für Bericht und Vorlage")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    stichtag = date.today()
 
     cfg_u, cfg_s = lade_config(), lade_scoring_config()
     aktien = lade_universum(cfg_u, args.markt)
@@ -420,21 +691,46 @@ def main(argv: list[str] | None = None) -> None:
                         max_alter_tage=cfg_u.get("marktkap_max_alter_tage", 7))
     behalten, _ = wende_filter_an(kennzahlen_fuer_filter(aktien, kurse, fx, kap),
                                   cfg_u["filter"], args.max_kurs)
-    tabelle = bewerte_universum(aktien, kurse, behalten, cfg_s)
+    tabelle = filtere_stil(bewerte_universum(aktien, kurse, behalten, cfg_s), args.stil)
+    vorauswahl = tabelle.head(args.kandidaten)
+    if not args.ohne_fundamentals and len(vorauswahl):
+        fund = lade_fundamentals(list(vorauswahl["ticker"]), details=True, nur_cache=args.nur_cache)
+        basis = lade_fundamentals(list(behalten["ticker"]), details=False, nur_cache=True)
+        # Jahresendkurse für den eigenen KGV-Schnitt: 10-Jahres-Cache des Backtests, falls vorhanden
+        from analyst.data import DATENORDNER, KursCache, lade_kurse
+
+        lang = lade_kurse(list(vorauswahl["ticker"]), None, cache=KursCache(DATENORDNER / "prices_10y"),
+                          nur_cache=True)
+        vorauswahl = ergaenze_fundamentals(vorauswahl, fund, basis, kurse, cfg_s, kurse_historie=lang,
+                                           maerkte={a.ticker: a.markt for a in aktien})
+    top = args.top
+    if args.recherche:
+        vorauswahl = wende_recherche_an(vorauswahl, lade_recherche(args.recherche), cfg_s)
+        top = len(vorauswahl)
+
     meta = {
         "universum": len(aktien), "gefiltert": len(behalten),
         "max_kurs": args.max_kurs or cfg_u["filter"]["max_kurs_eur"],
         "kursstand": {cfg_u["maerkte"][m]["name"]: g["datum"].max()
-                      for m, g in tabelle.groupby("markt")} if len(tabelle) else {},
+                      for m, g in vorauswahl.groupby("markt")} if len(vorauswahl) else {},
         "wechselkurse": {w: (s.index[-1], float(s.iloc[-1])) for w, s in fx.items()},
         "gewichte": cfg_s["gewichte"], "gewichte_grund": cfg_s.get("gewichte_grund", ""),
+        "stil": STILE.get(args.stil, "") if args.stil else "",
+        "kandidaten": min(args.kandidaten, len(tabelle)) if not args.ohne_fundamentals else 0,
+        "recherchiert": bool(args.recherche),
     }
-    pfad = schreibe_bericht(tabelle, kurse, meta, args.top)
+    pfad = schreibe_bericht(vorauswahl, kurse, meta, top, ordner=args.ausgabe, stichtag=stichtag)
     print(f"Bericht: {pfad}")
+    if not args.recherche:
+        vorlage = schreibe_recherche_vorlage(vorauswahl, top, args.ausgabe / f"{stichtag}_recherche.yaml",
+                                             stichtag, cfg_s.get("kurstreiber_regel", []))
+        print(f"Recherche-Vorlage: {vorlage}" if vorlage else
+              "Recherche-Vorlage existiert bereits – nicht überschrieben")
     if args.journal:
         from analyst.journal import ideen_aus_bewertung, lade_journal, speichere_journal, trage_ein
 
-        neue = ideen_aus_bewertung(tabelle, kurse, args.top, str(pfad.relative_to(PROJEKT)))
+        quelle = str(pfad.relative_to(PROJEKT)) if pfad.is_relative_to(PROJEKT) else str(pfad)
+        neue = ideen_aus_bewertung(vorauswahl, kurse, top, quelle)
         journal, anzahl = trage_ein(lade_journal(), neue)
         speichere_journal(journal)
         print(f"Journal: {anzahl} neue Ideen eingetragen ({len(journal)} gesamt)")

@@ -44,3 +44,18 @@ PYTHONPATH=src python -m analyst.backtest --nur-auswertung   # gespeicherte Beob
 
 Lädt beim ersten Lauf 10 Jahre Kurse nach `data/prices_10y/` (ca. 6 Minuten), rechnet
 dann ca. 3–4 Minuten. Ergebnis: `reports/backtest_JJJJ-MM-TT.md`, Rohdaten in `data/backtest/`.
+
+## /top-aktien
+
+Der Befehl `/top-aktien [de|us|jp] [ueberverkauft|muster|ausbruch] [max 100]` (Datei
+`.claude/commands/top-aktien.md`) läuft in zwei Stufen:
+
+```bash
+PYTHONPATH=src python -m analyst.report --top 8                       # Stufe 1: Kandidaten + Recherche-Vorlage
+# … Claude füllt reports/JJJJ-MM-TT_recherche.yaml per Websuche …
+PYTHONPATH=src python -m analyst.report --nur-cache --recherche reports/JJJJ-MM-TT_recherche.yaml --journal
+```
+
+Fundamentaldaten (Yahoo) werden 7 Tage gecacht. Für den Branchenvergleich einmal pro Woche:
+`python scripts/aktualisiere_fundamentals.py` (ca. 20 Minuten; bricht bei Yahoo-Sperre ab und
+setzt beim nächsten Start fort).

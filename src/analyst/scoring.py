@@ -210,10 +210,14 @@ def klasse(gesamt: float, max_punkte: float, cfg: dict) -> str:
 
 
 def gesamtscore(teile: dict[str, int], cfg: dict) -> tuple[int, int]:
-    """Gesamtscore und Maximum: Σ Gewicht · Punkte bzw. Σ Gewicht · 10."""
+    """Gesamtscore und Maximum: Σ Gewicht · Punkte bzw. Σ Gewicht · 10.
+
+    Das Maximum zählt nur die übergebenen Bereiche: Der rein technische Teil
+    (T, M, R) hat sein eigenes Maximum, mit B, K, E steigt es entsprechend.
+    """
     g = cfg["gewichte"]
     gesamt = sum(g.get(b, 0) * p for b, p in teile.items())
-    maximum = sum(10 * w for w in g.values())
+    maximum = sum(10 * g.get(b, 0) for b in teile)
     return int(round(gesamt)), int(round(maximum))
 
 
@@ -239,7 +243,7 @@ def bewerte_aktie(
     return {
         **ind, **risiko,
         "T": t, "M": m, "R": r, "gesamt": gesamt, "max_punkte": max_punkte,
-        "gewertet": [b for b, w in cfg["gewichte"].items() if w > 0],
+        "gewertet": [b for b in ("T", "M", "R") if cfg["gewichte"].get(b, 0) > 0],
         "klasse": klasse(gesamt, max_punkte, cfg),
         "gruende_T": t_gr, "gruende_M": m_gr, "gruende_R": r_gr,
         "warnungen": t_w + m_w + r_w,
