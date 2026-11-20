@@ -86,3 +86,11 @@ def test_symbol_umwandlung():
     assert jp_code_zu_yahoo("285a") == "285A.T"
     with pytest.raises(ValueError):
         jp_code_zu_yahoo("12345")
+
+
+def test_englische_namen(config):
+    mufg = lade_universum(config, ["jp"], basis=FIX)[0]
+    assert mufg.name == "Mitsubishi UFJ Financial Group, Inc."
+    assert mufg.name_lokal == "MUFG"
+    sap = next(a for a in lade_universum(config, ["de"], basis=FIX) if a.ticker == "SAP.DE")
+    assert sap.name_lokal == ""  # ohne Namensdatei bleibt alles wie gehabt

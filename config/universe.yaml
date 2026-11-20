@@ -25,6 +25,7 @@ maerkte:
     index: ^N225
     waehrung: JPY
     liste: config/tickers/jp.csv
+    namen_en: config/tickers/jp_namen_en.csv   # englische Namen (scripts/aktualisiere_namen.py)
     zeitzone: Asia/Tokyo
     handelsschluss: "15:30"   # TSE seit Nov. 2024
 

@@ -25,4 +25,12 @@ PYTHONPATH=src python -m analyst.report [--markt de us jp] [--top 8] [--max-kurs
 ```
 
 Schreibt `reports/JJJJ-MM-TT.md` und Charts nach `reports/charts/`.
+Mit `--journal` werden die Ideen in `journal/ideen.csv` eingetragen.
+
+## Journal
+
+```bash
+PYTHONPATH=src python -m analyst.journal aktualisieren   # Kurse nach 5/20/60 Handelstagen ergänzen
+PYTHONPATH=src python -m analyst.journal auswerten       # Vergleich mit dem Index -> reports/journal_*.md
+```
 Score derzeit aus Technik, Muster, Risiko (0–30); Gewichte in `config/scoring.yaml`.

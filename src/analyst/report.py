@@ -403,6 +403,7 @@ def main(argv: list[str] | None = None) -> None:
     p.add_argument("--top", type=int, default=8)
     p.add_argument("--max-kurs", type=float, help="Preisgrenze in Euro")
     p.add_argument("--nur-cache", action="store_true")
+    p.add_argument("--journal", action="store_true", help="Ideen in journal/ideen.csv eintragen")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 
@@ -424,6 +425,13 @@ def main(argv: list[str] | None = None) -> None:
     }
     pfad = schreibe_bericht(tabelle, kurse, meta, args.top)
     print(f"Bericht: {pfad}")
+    if args.journal:
+        from analyst.journal import ideen_aus_bewertung, lade_journal, speichere_journal, trage_ein
+
+        neue = ideen_aus_bewertung(tabelle, kurse, args.top, str(pfad.relative_to(PROJEKT)))
+        journal, anzahl = trage_ein(lade_journal(), neue)
+        speichere_journal(journal)
+        print(f"Journal: {anzahl} neue Ideen eingetragen ({len(journal)} gesamt)")
 
 
 if __name__ == "__main__":

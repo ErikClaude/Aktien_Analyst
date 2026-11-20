@@ -1,7 +1,7 @@
 maerkte:
   de: {name: DAX, index: ^GDAXI, waehrung: EUR, liste: tickers/de.csv, zeitzone: Europe/Berlin, handelsschluss: "17:30"}
   us: {name: S&P 500, index: ^GSPC, waehrung: USD, liste: tickers/us.csv, zeitzone: America/New_York, handelsschluss: "16:00"}
-  jp: {name: Nikkei 225, index: ^N225, waehrung: JPY, liste: tickers/jp.csv, zeitzone: Asia/Tokyo, handelsschluss: "15:30"}
+  jp: {name: Nikkei 225, index: ^N225, waehrung: JPY, liste: tickers/jp.csv, namen_en: tickers/jp_namen_en.csv, zeitzone: Asia/Tokyo, handelsschluss: "15:30"}
 wechselkurse: {USD: EURUSD=X, JPY: EURJPY=X}
 filter: {max_kurs_eur: 150, min_kurs_eur: 1, min_marktkap_eur: 1.0e+9}
 zeitraum: 2y

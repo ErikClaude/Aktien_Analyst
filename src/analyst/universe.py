@@ -9,7 +9,7 @@ angewendet, die ``data.kennzahlen_fuer_filter`` liefert.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import pandas as pd
@@ -29,6 +29,7 @@ class Aktie:
     waehrung: str        # Handelswährung, z. B. "EUR"
     index: str           # Vergleichsindex, z. B. "^GDAXI"
     sektor: str = ""
+    name_lokal: str = ""  # Originalname, falls ``name`` eine Übersetzung ist (z. B. Japanisch)
 
 
 def lade_config(pfad: Path | str = STANDARD_CONFIG) -> dict:
@@ -46,6 +47,8 @@ def lade_universum(
 
     ``maerkte`` begrenzt auf einzelne Märkte (z. B. ``["de"]``).
     Tickerdubletten werden entfernt, Ausschlüsse aus der Config beachtet.
+    Hat ein Markt eine Datei ``namen_en`` (ticker, name_en), ersetzt der
+    englische Name den Listennamen; der Originalname bleibt in ``name_lokal``.
     """
     gewaehlt = maerkte or list(config["maerkte"])
     unbekannt = set(gewaehlt) - set(config["maerkte"])
@@ -58,8 +61,12 @@ def lade_universum(
     for markt in gewaehlt:
         info = config["maerkte"][markt]
         liste = pd.read_csv(basis / info["liste"], dtype=str).fillna("")
+        namen_en = _lade_namen_en(basis, info)
         for _, zeile in liste.iterrows():
-            aktien.setdefault(zeile["ticker"], _aktie(zeile, markt, info))
+            a = _aktie(zeile, markt, info)
+            if namen_en.get(a.ticker):
+                a = replace(a, name=namen_en[a.ticker], name_lokal=a.name)
+            aktien.setdefault(a.ticker, a)
 
     for z in config.get("zusatz") or []:
         if z["markt"] in gewaehlt:
@@ -67,6 +74,15 @@ def lade_universum(
             aktien.setdefault(z["ticker"], _aktie(z, z["markt"], info))
 
     return [a for t, a in aktien.items() if t not in ausschluss]
+
+
+def _lade_namen_en(basis: Path, info: dict) -> dict[str, str]:
+    """Englische Namen je Ticker aus der optionalen Datei ``namen_en`` des Marktes."""
+    pfad = info.get("namen_en")
+    if not pfad or not (basis / pfad).exists():
+        return {}
+    df = pd.read_csv(basis / pfad, dtype=str).fillna("")
+    return dict(zip(df["ticker"], df["name_en"]))
 
 
 def _aktie(zeile, markt: str, info: dict) -> Aktie:
