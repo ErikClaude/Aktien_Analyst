@@ -37,7 +37,8 @@ def daten():
     tab = bewerte_universum(aktien, kurse, filt, lade_scoring_config())
     meta = {"universum": 2, "gefiltert": 2, "max_kurs": 150,
             "kursstand": {"S&P 500": tab["datum"].max()},
-            "wechselkurse": {"USD": (pd.Timestamp("2026-11-20"), 1.0971)}}
+            "wechselkurse": {"USD": (pd.Timestamp("2026-11-20"), 1.0971)},
+            "gewichte": {"T": 1, "M": 0, "R": 0}, "gewichte_grund": "Backtest-Test"}
     return tab, kurse, meta
 
 
@@ -65,7 +66,9 @@ def test_bericht_aufbau(daten):
                       "**Bear-Fall (technisch):**", "**Eingepreist?** nicht bewertet", "**Gebühr:**",
                       "**Quellen:**", "## Termine der nächsten Wochen", "**Begriffe**"):
         assert abschnitt in md, abschnitt
-    assert "Score " in md and "/30" in md
+    assert "Score " in md and "/10" in md
+    assert "Gewichte: T 1, M 0, R 0" in md and "Grund der Gewichtung: Backtest-Test" in md
+    assert "gewertet: T (übrige nur angezeigt)" in md
     assert "|---" not in md and "| " not in md        # keine Tabellen (Tablet)
     assert "1 € = 1,0971 USD" in md
     assert "Wechselkurs EUR/USD" in md                 # Quelle nur bei Fremdwährung

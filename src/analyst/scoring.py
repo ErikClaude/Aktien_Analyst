@@ -101,8 +101,8 @@ def punkte_technik(ind: dict, cfg: dict) -> tuple[int, list[str], list[str]]:
     plus(ind["kreuzung"] == "Death Cross", "death_cross_frisch", "frisches Death Cross")
     plus(ind["rs_3m_pp"] > 0, "rs_3m_positiv", "stärker als Index (3 Monate)")
     plus(ind["rs_12m_pp"] > 0, "rs_12m_positiv", "stärker als Index (12 Monate)")
-    plus(rsi < c["rsi_ueberverkauft"] and aufwaerts, "ruecksetzer_im_aufwaertstrend",
-         "überverkaufter Rücksetzer im Aufwärtstrend")
+    plus(rsi < c["rsi_ruecksetzer"] and kurs > s200, "ruecksetzer_langfristig",
+         "Rücksetzer im langfristigen Trend (RSI < " f"{c['rsi_ruecksetzer']}, über 200-Tage-Linie)")
     plus(rsi > c["rsi_ueberkauft"], "ueberkauft", "RSI überkauft")
     plus(aufwaerts and ind["abstand_hoch_pct"] >= -c["nahe_hoch_pct"], "nahe_52w_hoch_im_trend",
          "nahe 52-Wochen-Hoch im Aufwärtstrend")
@@ -196,14 +196,25 @@ def punkte_risiko(ind: dict, risiko: dict, stopp: float, cfg: dict) -> tuple[int
     return _begrenzt(sum(p for p, _ in teile)), gruende, warn
 
 
-def klasse(gesamt: int, max_punkte: int, cfg: dict) -> str:
-    """Einstufung: "stark", "gemischt" oder "schwach"."""
-    k = cfg["klassen"][max_punkte]
-    if gesamt >= k["stark_ab"]:
+def klasse(gesamt: float, max_punkte: float, cfg: dict) -> str:
+    """Einstufung "stark" / "gemischt" / "schwach" nach Anteil am Maximum."""
+    k = cfg["klassen"]
+    if max_punkte <= 0:
+        return "schwach"
+    anteil = gesamt / max_punkte
+    if anteil >= k["stark_ab_anteil"] - 1e-9:
         return "stark"
-    if gesamt >= k["gemischt_ab"]:
+    if anteil >= k["gemischt_ab_anteil"] - 1e-9:
         return "gemischt"
     return "schwach"
+
+
+def gesamtscore(teile: dict[str, int], cfg: dict) -> tuple[int, int]:
+    """Gesamtscore und Maximum: Σ Gewicht · Punkte bzw. Σ Gewicht · 10."""
+    g = cfg["gewichte"]
+    gesamt = sum(g.get(b, 0) * p for b, p in teile.items())
+    maximum = sum(10 * w for w in g.values())
+    return int(round(gesamt)), int(round(maximum))
 
 
 # --------------------------------------------------------------------------
@@ -224,11 +235,11 @@ def bewerte_aktie(
     m, m_gr, m_w, haupt = punkte_muster(muster, cfg, ind["kurs"])
     stopp, stopp_art = stopp_marke(ind, haupt)
     r, r_gr, r_w = punkte_risiko(ind, risiko, stopp, cfg)
-    max_punkte = 10 * len(cfg["bereiche"])
-    gesamt = t + m + r
+    gesamt, max_punkte = gesamtscore({"T": t, "M": m, "R": r}, cfg)
     return {
         **ind, **risiko,
         "T": t, "M": m, "R": r, "gesamt": gesamt, "max_punkte": max_punkte,
+        "gewertet": [b for b, w in cfg["gewichte"].items() if w > 0],
         "klasse": klasse(gesamt, max_punkte, cfg),
         "gruende_T": t_gr, "gruende_M": m_gr, "gruende_R": r_gr,
         "warnungen": t_w + m_w + r_w,
@@ -265,5 +276,5 @@ def bewerte_universum(
     if not zeilen:
         return pd.DataFrame()
     return (pd.DataFrame(zeilen)
-            .sort_values(["gesamt", "T", "R"], ascending=False)
+            .sort_values(cfg["sortierung"], ascending=False)
             .reset_index(drop=True))

@@ -9,6 +9,7 @@ import pytest
 from analyst.patterns import Muster
 from analyst.scoring import (
     bewerte_aktie,
+    gesamtscore,
     bewerte_universum,
     klasse,
     lade_scoring_config,
@@ -159,8 +160,9 @@ def test_risiko_punkte(cfg):
 def test_bewerte_aktie_aufwaertstrend(cfg):
     wellen = np.linspace(100, 150, 300) + np.sin(np.arange(300) / 4) * 2
     z = bewerte_aktie(reihe(wellen), reihe(np.linspace(1000, 1050, 300)), cfg)
-    assert z["gesamt"] == z["T"] + z["M"] + z["R"]
-    assert z["max_punkte"] == 30
+    # Gewichte laut config: T 1, M 0, R 0 -> Gesamt = T, Maximum 10
+    assert z["gesamt"] == z["T"] and z["max_punkte"] == 10
+    assert z["gewertet"] == ["T"]
     assert z["T"] >= 6
     assert z["klasse"] in ("stark", "gemischt", "schwach")
 
@@ -185,3 +187,38 @@ def test_ruecklauf_nach_bestaetigung_zaehlt_wie_in_bildung(cfg):
     assert any("Rücklauf" in w for w in warn)
     assert m.ruecklauf(103.0) and not m.ruecklauf(108.0)
     assert not muster(status="in Bildung").ruecklauf(103.0)
+
+
+def test_gesamtscore_gewichte(cfg):
+    assert gesamtscore({"T": 8, "M": 9, "R": 10}, cfg) == (8, 10)
+    alt = {**cfg, "gewichte": {"T": 1, "M": 1, "R": 1}}
+    assert gesamtscore({"T": 8, "M": 9, "R": 10}, alt) == (27, 30)
+
+
+def test_klasse_als_anteil(cfg):
+    assert klasse(7, 10, cfg) == "stark" and klasse(6, 10, cfg) == "gemischt"
+    assert klasse(4, 10, cfg) == "gemischt" and klasse(3, 10, cfg) == "schwach"
+
+
+def test_neue_ruecksetzer_regel(cfg):
+    """RSI 38 über der 200-Tage-Linie, Trend nur gemischt (unter der 50-Tage-Linie): +2."""
+    ind = ind_basis(kurs=102, sma50=105, sma200=100, rsi14=38, trend="gemischt")
+    t, gruende, _ = punkte_technik(ind, cfg)
+    assert any("Rücksetzer im langfristigen Trend" in g for g in gruende)
+    unter = ind_basis(kurs=95, sma50=105, sma200=100, rsi14=38, trend="gemischt")
+    assert not any("Rücksetzer" in g for g in punkte_technik(unter, cfg)[1])
+
+
+def test_sortierung_ohne_risiko(cfg, monkeypatch):
+    """Gleicher Score und gleiche Technik: höhere relative Stärke (3 M) vorn, R egal."""
+    feste = {"RUHIG": {"gesamt": 8, "T": 8, "R": 10, "rs_3m_pp": 1.0},
+             "STARK": {"gesamt": 8, "T": 8, "R": 2, "rs_3m_pp": 6.0},
+             "HOCH": {"gesamt": 9, "T": 9, "R": 0, "rs_3m_pp": -3.0}}
+    monkeypatch.setattr("analyst.scoring.bewerte_aktie", lambda df, idx, c, r: dict(feste[df.attrs["t"]]))
+    aktien, kurse = [], {}
+    for t in feste:
+        aktien.append(Aktie(t, t, "de", "EUR", "^X"))
+        kurse[t] = reihe(np.linspace(100, 110, 100))
+        kurse[t].attrs["t"] = t
+    filt = pd.DataFrame({"ticker": list(feste), "kurs_eur": 100.0, "marktkap_eur": 5e9})
+    assert list(bewerte_universum(aktien, kurse, filt, cfg)["ticker"]) == ["HOCH", "STARK", "RUHIG"]

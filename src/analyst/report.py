@@ -156,7 +156,9 @@ def idee_markdown(z: dict, rang: int, chart: str | None) -> str:
 
     teile = [
         f"### {rang}. {z['name']} ({z['ticker']}, {boerse(z['ticker'])}) – Score {z['gesamt']}/{z['max_punkte']}",
-        f"T {z['T']} · M {z['M']} · R {z['R']} · B, K, E: nicht bewertet · **{z['klasse']}**",
+        f"T {z['T']} · M {z['M']} · R {z['R']} · gewertet: {', '.join(z['gewertet'])}"
+        + (f" (übrige nur angezeigt)" if len(z["gewertet"]) < 3 else "")
+        + f" · B, K, E: nicht bewertet · **{z['klasse']}**",
         "",
         f"**Setup:** {setup_text(z)}",
         "",
@@ -243,9 +245,12 @@ def bericht_markdown(tabelle: pd.DataFrame, top: int, stichtag: date, meta: dict
     kopf = [
         f"# Aktien-Screener – {datum_de(stichtag)}",
         "",
-        f"Ausbaustufe 1: Score aus Technik, Muster und Risiko (0–{max_p}). "
+        f"Score 0–{max_p}. Gewichte: "
+        + ", ".join(f"{b} {w}" for b, w in meta.get("gewichte", {}).items())
+        + ". Bereiche mit Gewicht 0 werden angezeigt, zählen aber nicht. "
         "Bewertung, Kurstreiber und Erwartungen sind noch nicht enthalten.",
         "",
+        *([f"Grund der Gewichtung: {meta['gewichte_grund']}", ""] if meta.get("gewichte_grund") else []),
         "**Datenlage**",
         f"- Universum: {meta['universum']} Aktien, nach Filtern {meta['gefiltert']} "
         f"(Kurs unter {zahl(meta['max_kurs'], 0)} €, Marktkap. ab 1 Mrd. €), bewertet {len(tabelle)}",
@@ -422,6 +427,7 @@ def main(argv: list[str] | None = None) -> None:
         "kursstand": {cfg_u["maerkte"][m]["name"]: g["datum"].max()
                       for m, g in tabelle.groupby("markt")} if len(tabelle) else {},
         "wechselkurse": {w: (s.index[-1], float(s.iloc[-1])) for w, s in fx.items()},
+        "gewichte": cfg_s["gewichte"], "gewichte_grund": cfg_s.get("gewichte_grund", ""),
     }
     pfad = schreibe_bericht(tabelle, kurse, meta, args.top)
     print(f"Bericht: {pfad}")

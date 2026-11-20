@@ -104,6 +104,8 @@ def beobachtungen_aktie(
             "stichtag": close.index[pos], "ticker": aktie.ticker, "markt": aktie.markt,
             "kurs": kurs, "kurs_eur": kurs_eur,
             "T": z["T"], "M": z["M"], "R": z["R"], "gesamt": z["gesamt"], "klasse": z["klasse"],
+            "max_punkte": z["max_punkte"], "rs_3m_pp": z["rs_3m_pp"],
+            "kurs_ueber_sma200": bool(z["kurs"] > z["sma200"]),
             "trend": z["trend"], "rsi14": z["rsi14"], "stopp": z["stopp"],
             "haupt_muster": haupt.name if haupt is not None else "",
             "haupt_status": haupt.status if haupt is not None else "",
@@ -159,7 +161,8 @@ def beobachtungen(
         return df
     # Stichtage der Märkte vereinheitlichen (Feiertage): auf den Kalender-Stichtag abbilden
     df["periode"] = pd.DatetimeIndex(tage).searchsorted(df["stichtag"], side="left")
-    df = df.sort_values(["periode", "gesamt", "T", "R"], ascending=[True, False, False, False])
+    sortierung = cfg.get("sortierung", ["gesamt", "T"])
+    df = df.sort_values(["periode", *sortierung], ascending=[True] + [False] * len(sortierung))
     df["rang"] = df.groupby("periode").cumcount() + 1
     df["top"] = df["rang"] <= einst.top_n
     return df.reset_index(drop=True)
@@ -234,7 +237,10 @@ def muster_masken(beob: pd.DataFrame) -> dict[str, pd.Series]:
 def gruppen(beob: pd.DataFrame) -> dict[str, dict[str, pd.Series]]:
     """Alle Vergleichsgruppen, thematisch sortiert."""
     alle = pd.Series(True, index=beob.index)
-    band = pd.cut(beob["gesamt"], [-1, 8, 14, 20, 30], labels=["0–8", "9–14", "15–20", "21–30"])
+    # Score-Bänder als Anteil vom Maximum (unabhängig von der Ausbaustufe)
+    anteil = beob["gesamt"] / beob["max_punkte"]
+    band = pd.cut(anteil, [-0.01, 0.299, 0.499, 0.699, 1.0],
+                  labels=["unter 30 %", "30–49 %", "50–69 %", "ab 70 %"])
     ueberverkauft = beob["rsi14"] < 30
     return {
         "Messlatte und Score": {
@@ -250,6 +256,7 @@ def gruppen(beob: pd.DataFrame) -> dict[str, dict[str, pd.Series]]:
         },
         "RSI und Trend": {
             "RSI < 30 im Aufwärtstrend": ueberverkauft & (beob["trend"] == "Aufwärtstrend"),
+            "RSI < 40 über 200-Tage-Linie (neue Regel)": (beob["rsi14"] < 40) & beob["kurs_ueber_sma200"],
             "RSI < 30 im Abwärtstrend": ueberverkauft & (beob["trend"] == "Abwärtstrend"),
             "RSI > 70": beob["rsi14"] > 70,
         },
@@ -271,6 +278,51 @@ def auswerten(beob: pd.DataFrame, einst: Einstellungen = Einstellungen()) -> pd.
 
 
 MESSLATTE = "Alle Aktien im Filter (Messlatte)"
+
+
+def top_n_differenz(beob: pd.DataFrame, sortierung: list[str], h: int, n: int = 8,
+                    perioden: list | None = None) -> dict:
+    """Top-n nach ``sortierung`` minus Messlatte, je Stichtag, gemittelt (mit t-Wert).
+
+    Dient den Robustheitsprüfungen: andere Gleichstandsregel, nicht
+    überlappende Stichtage.
+    """
+    b = beob[beob[f"ue_{h}"].notna()]
+    if perioden is not None:
+        b = b[b["periode"].isin(perioden)]
+    b = b.sort_values(["periode", *sortierung], ascending=[True] + [False] * len(sortierung))
+    d = (b.groupby("periode").head(n).groupby("periode")[f"ue_{h}"].mean()
+         - b.groupby("periode")[f"ue_{h}"].mean())
+    return {"diff_pp": float(d.mean()) if len(d) else math.nan, "t": _t_wert(d), "stichtage": len(d)}
+
+
+def robustheit(beob: pd.DataFrame, sortierung: list[str], einst: Einstellungen,
+               zufall_seed: int = 0) -> list[str]:
+    """Textzeilen: Hält der Top-n-Befund, wenn man Annahmen ändert?"""
+    h = max(einst.horizonte)
+    b = beob.copy()
+    b["_zufall"] = np.random.default_rng(zufall_seed).random(len(b))
+    zeilen = []
+
+    def zeile(text, r):
+        zeilen.append(f"- {text}: Δ {_z(r['diff_pp'])} (t {_z(r['t'], '', 1).strip()}, "
+                      f"{r['stichtage']} Stichtage)")
+
+    zeile(f"Top {einst.top_n} wie im Bericht, {h} Tage", top_n_differenz(b, sortierung, h, einst.top_n))
+    ohne_letzte = [s for s in sortierung if s not in ("gesamt", "T")]
+    if ohne_letzte:
+        klartext = {"rs_3m_pp": "relativer Stärke (3 Monate)", "R": "Risiko"}
+        zeile("Gleichstand per Zufall statt nach " + ", ".join(klartext.get(s, s) for s in ohne_letzte),
+              top_n_differenz(b, ["gesamt", "T", "_zufall"], h, einst.top_n))
+    perioden = sorted(b["periode"].unique())
+    schritt = max(1, math.ceil(h / einst.schritt_tage))
+    for versatz in range(schritt):
+        zeile(f"ohne Überlappung (jeder {schritt}. Stichtag, Start {versatz + 1})",
+              top_n_differenz(b, sortierung, h, einst.top_n, perioden[versatz::schritt]))
+    grenze = b["stichtag"].min() + (b["stichtag"].max() - b["stichtag"].min()) / 2
+    for name, maske in (("erste Hälfte", b["stichtag"] < grenze), ("zweite Hälfte", b["stichtag"] >= grenze)):
+        zeile(f"{name} des Zeitraums", top_n_differenz(b[maske], sortierung, h, einst.top_n))
+    return zeilen
 
 
 def urteil(z: pd.Series, einst: Einstellungen) -> str:
@@ -306,7 +358,8 @@ def gebuehr_pct(einst: Einstellungen) -> float:
 
 
 def backtest_markdown(beob: pd.DataFrame, aus: pd.DataFrame, einst: Einstellungen,
-                      stichtag: date | None = None) -> str:
+                      stichtag: date | None = None,
+                      sortierung: list[str] | None = None) -> str:
     """Ergebnisbericht (Listen, keine Tabellen)."""
     stichtag = stichtag or date.today()
     perioden = beob.groupby("periode")["stichtag"].max()
@@ -318,7 +371,8 @@ def backtest_markdown(beob: pd.DataFrame, aus: pd.DataFrame, einst: Einstellunge
         f"{len(perioden)} Stichtage im Abstand von {einst.schritt_tage} Handelstagen",
         f"- {len(beob)} Beobachtungen, {beob['ticker'].nunique()} Aktien, "
         f"Preisfilter < {einst.max_kurs_eur:.0f} € zum damaligen Kurs",
-        "- Score nur aus Kursen bis zum Stichtag (Technik, Muster, Risiko; 0–30)",
+        f"- Score nur aus Kursen bis zum Stichtag (0–{int(beob['max_punkte'].max())} Punkte; "
+        "Gewichte laut config/scoring.yaml zum Zeitpunkt des Laufs)",
         "- Überrendite = Rendite der Aktie minus Rendite des Heimatindex (Pp. = Prozentpunkte)",
         "- Δ = Abstand zur Messlatte am selben Stichtag, gemittelt; t-Wert dieses Abstands: "
         "ab ±2 gilt der Unterschied als belastbar. Beim 60-Tage-Horizont überlappen die "
@@ -366,6 +420,11 @@ def backtest_markdown(beob: pd.DataFrame, aus: pd.DataFrame, einst: Einstellunge
                     f"{z['stopp_quote_pct']:.0f} %, {z['beobachtungen']} Beob. – "
                     f"**{urteil(z, einst)}**")
             t.append("")
+
+    # Robustheit
+    t += ["## Robustheit des Top-8-Befunds", "",
+          "Ein Befund zählt nur, wenn er auch unter geänderten Annahmen hält.", "",
+          *robustheit(beob, sortierung or ["gesamt", "T", "rs_3m_pp"], einst), ""]
 
     # Gebühren
     top = aus[(aus["gruppe"] == "Top 8 nach Score")].set_index("horizont")
@@ -442,10 +501,13 @@ def lade_beobachtungen(pfad) -> pd.DataFrame:
 
 def _schreibe_ergebnis(beob: pd.DataFrame, einst: Einstellungen, ordner, projekt) -> None:
     """Auswertung als CSV und Bericht als Markdown speichern."""
+    from analyst.scoring import lade_scoring_config
+
     aus = auswerten(beob, einst)
     aus.to_csv(ordner / "auswertung.csv", index=False)
     ziel = projekt / "reports" / f"backtest_{date.today().isoformat()}.md"
-    ziel.write_text(backtest_markdown(beob, aus, einst), encoding="utf-8")
+    sortierung = lade_scoring_config().get("sortierung", ["gesamt", "T"])
+    ziel.write_text(backtest_markdown(beob, aus, einst, sortierung=sortierung), encoding="utf-8")
     print(f"Bericht: {ziel}")
 
 

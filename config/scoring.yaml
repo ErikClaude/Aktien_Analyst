@@ -1,19 +1,27 @@
 # Signal-Score: Gewichte und Schwellen
 #
-# Startwerte (Stand 2026-11-20). Nur nach Auswertung von Journal bzw.
-# Backtest ändern – und die Änderung im Commit begründen.
+# Nur nach Auswertung von Journal bzw. Backtest ändern – und die Änderung
+# im Commit begründen.
 #
-# Ausbaustufe: Bis fundamentals und Websuche angebunden sind, zählen nur
-# Technik (T), Muster (M) und Risiko (R) -> 0–30 Punkte.
-# Bewertung (B), Kurstreiber (K) und Erwartungen (E) sind "nicht bewertet".
+# Ausbaustufe: Bewertung (B), Kurstreiber (K) und Erwartungen (E) folgen mit
+# fundamentals und der Websuche und sind bis dahin "nicht bewertet".
 
-bereiche: [T, M, R]   # später: [T, M, B, K, E, R] -> 0–60
+# Gewicht je Bereich (jeder Bereich hat 0–10 Punkte).
+# Gesamtscore = Σ Gewicht · Punkte, Maximum = Σ Gewicht · 10.
+# Gewicht 0: Bereich wird berechnet und im Bericht gezeigt, zählt aber nicht.
+gewichte: {T: 1, M: 0, R: 0}
+gewichte_grund: >-
+  Backtest 20.11.2026 (2017–2026): Risiko-Punkte bevorzugten Aktien, die
+  danach zurücklagen (R >= 8: −1,9 Pp. nach 60 Tagen, t −4,7); Muster ohne
+  belastbaren Vorsprung (M > 0: −0,6 Pp., t −2,1). Deshalb vorerst Gewicht 0.
 
-# Einstufung des Gesamtscores, je Ausbaustufe.
-# 0–30: Schwellen aus CLAUDE.md (42/24 von 60) halbiert.
-klassen:
-  30: {stark_ab: 21, gemischt_ab: 12}
-  60: {stark_ab: 42, gemischt_ab: 24}
+# Einstufung als Anteil vom Maximum – entspricht 42 und 24 von 60 (CLAUDE.md).
+klassen: {stark_ab_anteil: 0.7, gemischt_ab_anteil: 0.4}
+
+# Reihenfolge bei gleichem Gesamtscore (absteigend): erst Technik, dann
+# relative Stärke über 3 Monate (Teil der Technik). Risiko ist bewusst kein
+# Kriterium mehr (siehe gewichte_grund).
+sortierung: [gesamt, T, rs_3m_pp]
 
 # --- Technik (T): Trend, Lage zu den Linien, relative Stärke -------------
 # Punkte werden addiert und auf 0–10 begrenzt.
@@ -26,11 +34,13 @@ technik:
   death_cross_frisch: -1
   rs_3m_positiv: 1             # besser als der Index über 3 Monate
   rs_12m_positiv: 1
-  ruecksetzer_im_aufwaertstrend: 2  # RSI < ueberverkauft UND Aufwärtstrend
+  ruecksetzer_langfristig: 2   # RSI < rsi_ruecksetzer UND Kurs über 200-Tage-Linie
+                               # (ersetzt "RSI < 30 im Aufwärtstrend": kam 2017–2026 nie vor)
   ueberkauft: -1               # RSI > ueberkauft: Rückschlaggefahr
   nahe_52w_hoch_im_trend: 1    # Abstand zum Hoch <= nahe_hoch_pct im Aufwärtstrend
   rsi_ueberkauft: 70
   rsi_ueberverkauft: 30
+  rsi_ruecksetzer: 40
   nahe_hoch_pct: 5
 
 # --- Muster (M): nur bullische Muster bringen Punkte ----------------------

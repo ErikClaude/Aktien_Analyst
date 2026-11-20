@@ -21,6 +21,7 @@ from analyst.backtest import (
     muster_masken,
     rang_korrelation,
     stichtage,
+    top_n_differenz,
     urteil,
 )
 from analyst.scoring import bewerte_aktie, lade_scoring_config
@@ -185,6 +186,16 @@ def test_bericht(cfg):
     beob = beobachtungen(aktien, kurse, fx_flach(), cfg, EINST)
     md = backtest_markdown(beob, auswerten(beob, EINST), EINST, date(2026, 11, 20))
     for teil in ("# Backtest – 20.11.2026", "**Bekannte Verzerrungen**", "Survivorship Bias",
+                 "## Robustheit des Top-8-Befunds", "Gleichstand per Zufall", "ohne Überlappung",
                  "Alle Aktien im Filter (Messlatte)", "## Nach Gebühren", "## Ordnet der Score"):
         assert teil in md, teil
     assert "|" not in md
+
+
+def test_top_n_differenz():
+    b = handgemacht()
+    b["ue_5"] = b["ue_5"].astype(float)
+    # Top 1 nach Score ist immer X: Differenz zur Messlatte wie in test_differenz_zur_messlatte
+    r = top_n_differenz(b, ["gesamt"], 5, n=1)
+    assert r["diff_pp"] == pytest.approx(1.75) and r["stichtage"] == 4
+    assert top_n_differenz(b, ["gesamt"], 5, n=1, perioden=[0, 2])["diff_pp"] == pytest.approx(2.5)
