@@ -1,0 +1,1 @@
+"""Persönlicher Aktien-Analyst."""

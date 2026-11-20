@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+# Kurs-Cache: wird bei Bedarf neu geladen, nicht versioniert
+data/prices/
+data/meta/

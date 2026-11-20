@@ -1,0 +1,48 @@
+# Universum des Aktien-Analysten
+#
+# Die Tickerlisten (config/tickers/*.csv) werden mit
+#   python scripts/aktualisiere_tickerlisten.py
+# aus Wikipedia erzeugt. Manuelle Ergänzungen und Ausschlüsse nur hier
+# eintragen – die CSV-Dateien werden beim Aktualisieren überschrieben.
+
+maerkte:
+  de:
+    name: DAX
+    index: ^GDAXI
+    waehrung: EUR
+    liste: config/tickers/de.csv
+    zeitzone: Europe/Berlin
+    handelsschluss: "17:30"   # Xetra
+  us:
+    name: S&P 500
+    index: ^GSPC
+    waehrung: USD
+    liste: config/tickers/us.csv
+    zeitzone: America/New_York
+    handelsschluss: "16:00"
+  jp:
+    name: Nikkei 225
+    index: ^N225
+    waehrung: JPY
+    liste: config/tickers/jp.csv
+    zeitzone: Asia/Tokyo
+    handelsschluss: "15:30"   # TSE seit Nov. 2024
+
+# Wechselkurse: Yahoo-Ticker liefert "Fremdwährung je 1 EUR"
+wechselkurse:
+  USD: EURUSD=X
+  JPY: EURJPY=X
+
+filter:
+  max_kurs_eur: 150        # nur ganze Aktien per Einzelorder
+  min_kurs_eur: 1          # keine Penny Stocks
+  min_marktkap_eur: 1.0e+9  # mind. 1 Mrd. € Marktkapitalisierung
+
+# Daten
+zeitraum: 2y                 # Kurshistorie
+puffer_nach_schluss_min: 30  # erst danach gilt der Tagesbalken als fertig
+marktkap_max_alter_tage: 7   # Marktkap. seltener abfragen (Rate-Limit)
+
+# Manuelle Pflege
+zusatz: []      # z. B. [{ticker: "ASML.AS", name: "ASML", markt: de}]
+ausschluss: []  # z. B. ["XYZ"]
