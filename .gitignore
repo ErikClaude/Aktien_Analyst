@@ -4,3 +4,5 @@ __pycache__/
 # Kurs-Cache: wird bei Bedarf neu geladen, nicht versioniert
 data/prices/
 data/meta/
+data/prices_*/
+data/backtest/

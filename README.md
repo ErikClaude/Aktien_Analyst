@@ -34,3 +34,13 @@ PYTHONPATH=src python -m analyst.journal aktualisieren   # Kurse nach 5/20/60 Ha
 PYTHONPATH=src python -m analyst.journal auswerten       # Vergleich mit dem Index -> reports/journal_*.md
 ```
 Score derzeit aus Technik, Muster, Risiko (0–30); Gewichte in `config/scoring.yaml`.
+
+## Backtest
+
+```bash
+PYTHONPATH=src python -m analyst.backtest [--zeitraum 10y] [--prozesse 4] [--ordergroesse 500]
+PYTHONPATH=src python -m analyst.backtest --nur-auswertung   # gespeicherte Beobachtungen neu auswerten
+```
+
+Lädt beim ersten Lauf 10 Jahre Kurse nach `data/prices_10y/` (ca. 6 Minuten), rechnet
+dann ca. 3–4 Minuten. Ergebnis: `reports/backtest_JJJJ-MM-TT.md`, Rohdaten in `data/backtest/`.
